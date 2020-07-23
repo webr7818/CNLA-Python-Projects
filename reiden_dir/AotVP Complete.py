@@ -8,6 +8,9 @@ from random import randint
 #Initialize Pygame
 pygame.init()
 
+#Set up clock
+clock = time.Clock()
+
 #---------------------------------------------------
 #Define constant variables
 
@@ -25,6 +28,7 @@ WHITE = (255, 255, 255)
 
 #Set up rates
 SPAWN_RATE = 360
+FRAME_RATE = 60
 
 #---------------------------------------------------
 #Load assests
@@ -61,6 +65,13 @@ class VampireSprite(sprite.Sprite):
     
     #Set up enemy movement
     def update(self, game_window):
+        
+        #Erase the last sprite image
+        game_window.blit(BACKGROUND,\
+            (self.rect.x, self.rect.y), self.rect)
+        #Move the sprites
+        self.rect.x -= self.speed
+        #Update the sprite image to the new location
         game_window.blit(self.image, (self.rect.x, self.rect.y))
 
 #---------------------------------------------------
@@ -78,8 +89,8 @@ tile_color = WHITE
 #Populate the background grid
 for row in range(6):
     for column in range(11):
-        draw.rect(BACKGROUND, tile_color, (WIDTH * column,\
-        HEIGHT * row, WIDTH, HEIGHT), 1)
+        draw.rect(BACKGROUND, tile_color,\
+            (WIDTH * column, HEIGHT * row, WIDTH, HEIGHT), 1)
 
 #Display the background image to the screen
 GAME_WINDOW.blit(BACKGROUND, (0,0))
@@ -118,6 +129,9 @@ while game_running:
 
     #Update all images on the screen
     display.update()
+
+    #Set the FPS
+    clock.tick(FRAME_RATE)
 
 #Close main game loop
 #----------------------------------------------------
