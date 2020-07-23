@@ -151,9 +151,15 @@ for row in range(6):
     row_of_tiles = []
     tile_grid.append(row_of_tiles)
     for column in range(11):
+        #Create an invisible rect for each background
+        # tile sprite
         tile_rect = Rect(WIDTH * column, HEIGHT * row,\
             WIDTH, HEIGHT)
+        #For each column in each row, create a new 
+        # background tile sprite
         new_tile = BackgroundTile(tile_rect)
+        #Add each background tile sprite to the correct
+        # row_of_tiles list
         row_of_tiles.append(new_tile)
         draw.rect(BACKGROUND, tile_color,\
             (WIDTH * column, HEIGHT * row, WIDTH, HEIGHT), 1)
@@ -182,14 +188,18 @@ while game_running:
 
         #Set up the background tiles to respond to mouse clicks
         elif event.type == MOUSEBUTTONDOWN:
+
+            #Get the (x, y) coordinate where the mouse was 
+            # clicked on screen
             coordinates = mouse.get_pos()
             x = coordinates[0]
             y = coordinates[1]
+            #Find the background tile at the location where the 
+            # mouse was clicked and change the value of 
+            # effect to True
             tile_y = y // 100
             tile_x = x // 100
             tile_grid[tile_y][tile_x].effect = True
-            print('Clicked tile')
-
 
     #------------------------------------------------
     #Spawn sprites
@@ -202,23 +212,58 @@ while game_running:
     
     #Set up detection for collision with background tiles
     for vampire in all_vampires:
+        #Store vampire positions
+        
+        #Store the row where the vampire sprite is located
         tile_row = tile_grid[vampire.rect.y // 100]
+        #Store the current location of the right edge of 
+        # the vampire sprite
         vamp_left_side = vampire.rect.x // 100
+        #Store the current location of the right edge of
+        # the vampire sprite
         vamp_right_side = (vampire.rect.x + \
             vampire.rect.width) // 100
+        
+        #-------------------------------------------------
+        #Identify the tiles on the left and right sides
+        
+        #If the vampire sprite is on the grid, find which 
+        # column the left side is on.
         if 0 <= vamp_left_side <= 10:
             left_tile = tile_row[vamp_left_side]
+        #Return no column if the vampire sprite is not 
+        # on the grid
         else:
             left_tile = None
+
+        #If the vampire sprite is on the grid, find which 
+        # column the right side is on.
         if 0 <= vamp_right_side <= 10:
             right_tile = tile_row[vamp_right_side]
+        #Return no column if the vampire sprite is not 
+        # on the grid
         else:
             right_tile = None
+
+        #--------------------------------------------------
+        #Test for collision
+
+        #Test if the left side of the vampire pizza is 
+        # touching a tile and if that tile has been clicked.
         if bool(left_tile) and left_tile.effect:
+            #If true, change the vampire speed to 1.
             vampire.speed = SLOW_SPEED
+
+        #Test if the right side of the vampire pizza is 
+        # touching a tile and if that tile has been clicked.
         if bool(right_tile) and right_tile.effect:
+            #Test if the right and left sides of the sprite 
+            # are touching different tiles
             if right_tile != left_tile:
+                #If both are true, change speed to 1.
                 vampire.speed = SLOW_SPEED
+                
+        #Delete the vampire sprite when it leaves the screen
         if vampire.rect.x <= 0:
             vampire.kill()
 
