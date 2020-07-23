@@ -3,6 +3,7 @@
 #Import libraries
 import pygame
 from pygame import *
+from random import randint
 
 #Initialize Pygame
 pygame.init()
@@ -22,6 +23,9 @@ HEIGHT = 100
 #Define colors
 WHITE = (255, 255, 255)
 
+#Set up rates
+SPAWN_RATE = 360
+
 #---------------------------------------------------
 #Load assests
 
@@ -40,6 +44,32 @@ pizza_surf = Surface.convert_alpha(pizza_img)
 VAMPIRE_PIZZA = transform.scale(pizza_surf, (WIDTH, HEIGHT))
 
 #---------------------------------------------------
+#Set up class objects
+
+#Create an enemy object
+class VampireSprite(sprite.Sprite):
+
+    #Set up enemy instances
+    def __init__(self):
+        super().__init__()
+        self.speed = 2
+        self.lane = randint(0, 4)
+        all_vampires.add(self)
+        self.image = VAMPIRE_PIZZA.copy()
+        y = 50 + self.lane * 100
+        self.rect = self.image.get_rect(center = (1100, y))
+    
+    #Set up enemy movement
+    def update(self, game_window):
+        game_window.blit(self.image, (self.rect.x, self.rect.y))
+
+#---------------------------------------------------
+#Create class instances and groups
+
+#Create a group for all the VampireSprite instances
+all_vampires = sprite.Group()
+
+#---------------------------------------------------
 #Initialize and draw the background grid
 
 #Define the color of the gird outline
@@ -53,28 +83,40 @@ for row in range(6):
 
 #Display the background image to the screen
 GAME_WINDOW.blit(BACKGROUND, (0,0))
-#Display the enemy image to the screen
-GAME_WINDOW.blit(VAMPIRE_PIZZA, (900, 400))
 
 #---------------------------------------------------
-#Start main game loop
-
 #Game loop
+
+#Define the conditions for running the loop
 game_running = True
+
+#Start game loop
 while game_running:
 
     #-----------------------------------------------
     #Check for events
 
-    #Checking for and handling events
+    #Start loop to check for and handle events
     for event in pygame.event.get():
 
-        #Exit loop on quit
+        #Exit loop when the game window closes
         if event.type == QUIT:
             game_running = False
 
-    #--------------------------------------------
-    #Update display.
+    #------------------------------------------------
+    #Spawn sprites
+
+    #Spawn vampire pizza sprites
+    if randint(1, SPAWN_RATE) == 1:
+        VampireSprite()
+    #------------------------------------------------
+    #Update displays
+
+    #Update enemies
+    for vampire in all_vampires:
+        vampire.update(GAME_WINDOW)
+
+    #Update all images on the screen
     display.update()
 
 #Close main game loop
