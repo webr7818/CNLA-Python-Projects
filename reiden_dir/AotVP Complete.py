@@ -30,6 +30,11 @@ WHITE = (255, 255, 255)
 SPAWN_RATE = 360
 FRAME_RATE = 60
 
+#Set up counters
+STARTING_BUCKS = 15
+BUCK_RATE = 120
+STARTING_BUCK_BOOSTER = 1
+
 #Define speeds
 REG_SPEED = 2
 SLOW_SPEED = 1
@@ -78,6 +83,41 @@ class VampireSprite(sprite.Sprite):
         #Update the sprite image to the new location
         game_window.blit(self.image, (self.rect.x, self.rect.y))
 
+#Create an object for tracking the game state
+class Counters(object):
+
+    #Set up instances of counters
+    def __init__(self, pizza_bucks, buck_rate, buck_booster):
+        self.loop_count = 0
+        self.display_font = font.Font('Assets/pizza_font.ttf', 25)
+        self.pizza_bucks = pizza_bucks
+        self.buck_rate = buck_rate
+        self.buck_booster = buck_booster
+        self.bucks_rect = None
+
+    #Set the rate that the player earns pizza bucks
+    def increment_bucks(self):
+        if self.loop_count % self.buck_rate == 0:
+            self.pizza_bucks += self.buck_booster
+    
+    #Display pizza bucks total on the screen
+    def draw_bucks(self, game_window):
+        if bool(self.bucks_rect):
+            game_window.blit(BACKGROUND, (self.bucks_rect.x,\
+                self.bucks_rect.y), self.bucks_rect)
+            bucks_surf = self.display_font.render( \
+                str(self.pizza_bucks), True, WHITE)
+            self.bucks_rect = bucks_surf.get_rect()
+            self.bucks_rect.x = WINDOW_WIDTH - 50
+            self.bucks_rect.y = WINDOW_HEIGHT - 50
+            game_window.blit(bucks_surf, self.bucks_rect)
+    
+    #Increment the loop counter and call the other Counters methods
+    def update(self, game_window):
+        self.loop_count += 1
+        self.increment_bucks()
+        self.draw_bucks(game_window)
+
 #Create a background tile object
 class BackgroundTile(sprite.Sprite):
 
@@ -92,6 +132,10 @@ class BackgroundTile(sprite.Sprite):
 
 #Create a group for all the VampireSprite instances
 all_vampires = sprite.Group()
+
+#Create an instance of Counters
+counters = Counters(STARTING_BUCKS, BUCK_RATE, \
+    STARTING_BUCK_BOOSTER)
 
 #---------------------------------------------------
 #Initialize and draw the background grid
@@ -184,6 +228,9 @@ while game_running:
     #Update enemies
     for vampire in all_vampires:
         vampire.update(GAME_WINDOW)
+
+    #Update counters
+    counters.update(GAME_WINDOW)
 
     #Update all images on the screen
     display.update()
