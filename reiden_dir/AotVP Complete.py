@@ -30,6 +30,10 @@ WHITE = (255, 255, 255)
 SPAWN_RATE = 360
 FRAME_RATE = 60
 
+#Define speeds
+REG_SPEED = 2
+SLOW_SPEED = 1
+
 #---------------------------------------------------
 #Load assests
 
@@ -56,7 +60,7 @@ class VampireSprite(sprite.Sprite):
     #Set up enemy instances
     def __init__(self):
         super().__init__()
-        self.speed = 2
+        self.speed = REG_SPEED
         self.lane = randint(0, 4)
         all_vampires.add(self)
         self.image = VAMPIRE_PIZZA.copy()
@@ -149,6 +153,31 @@ while game_running:
     #Spawn vampire pizza sprites
     if randint(1, SPAWN_RATE) == 1:
         VampireSprite()
+    #------------------------------------------------
+    #Set up collision detection
+    
+    #Set up detection for collision with background tiles
+    for vampire in all_vampires:
+        tile_row = tile_grid[vampire.rect.y // 100]
+        vamp_left_side = vampire.rect.x // 100
+        vamp_right_side = (vampire.rect.x + \
+            vampire.rect.width) // 100
+        if 0 <= vamp_left_side <= 10:
+            left_tile = tile_row[vamp_left_side]
+        else:
+            left_tile = None
+        if 0 <= vamp_right_side <= 10:
+            right_tile = tile_row[vamp_right_side]
+        else:
+            right_tile = None
+        if bool(left_tile) and left_tile.effect:
+            vampire.speed = SLOW_SPEED
+        if bool(right_tile) and right_tile.effect:
+            if right_tile != left_tile:
+                vampire.speed = SLOW_SPEED
+        if vampire.rect.x <= 0:
+            vampire.kill()
+
     #------------------------------------------------
     #Update displays
 
