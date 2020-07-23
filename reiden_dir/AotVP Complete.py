@@ -11,7 +11,7 @@ pygame.init()
 #Set up clock
 clock = time.Clock()
 
-#---------------------------------------------------
+#------------------------------------------------------------
 #Define constant variables
 
 #Define the parameters of the game window
@@ -39,7 +39,7 @@ STARTING_BUCK_BOOSTER = 1
 REG_SPEED = 2
 SLOW_SPEED = 1
 
-#---------------------------------------------------
+#----------------------------------------------------------------
 #Load assests
 
 #Create the game window
@@ -56,7 +56,7 @@ pizza_img = image.load('Assets/vampire.png')
 pizza_surf = Surface.convert_alpha(pizza_img)
 VAMPIRE_PIZZA = transform.scale(pizza_surf, (WIDTH, HEIGHT))
 
-#---------------------------------------------------
+#----------------------------------------------------------------
 #Set up class objects
 
 #Create an enemy object
@@ -83,13 +83,17 @@ class VampireSprite(sprite.Sprite):
         #Update the sprite image to the new location
         game_window.blit(self.image, (self.rect.x, self.rect.y))
 
-#Create an object for tracking the game state
+#Create an object for tracking the game state-------------------
 class Counters(object):
 
     #Set up instances of counters
     def __init__(self, pizza_bucks, buck_rate, buck_booster):
+        #Start the game loop counter at 0
         self.loop_count = 0
+        #Set up the look of the counter on the screen
         self.display_font = font.Font('Assets/pizza_font.ttf', 25)
+
+        #Define attributes using given arguments
         self.pizza_bucks = pizza_bucks
         self.buck_rate = buck_rate
         self.buck_booster = buck_booster
@@ -97,20 +101,30 @@ class Counters(object):
 
     #Set the rate that the player earns pizza bucks
     def increment_bucks(self):
+        #Add a set number of pizza bucks to the player's total 
+        # once every 120 times the game loop runs
         if self.loop_count % self.buck_rate == 0:
             self.pizza_bucks += self.buck_booster
     
     #Display pizza bucks total on the screen
     def draw_bucks(self, game_window):
+        #Erase the last number from the game window
         if bool(self.bucks_rect):
-            game_window.blit(BACKGROUND, (self.bucks_rect.x,\
+            game_window.blit(BACKGROUND, (self.bucks_rect.x, \
                 self.bucks_rect.y), self.bucks_rect)
-            bucks_surf = self.display_font.render( \
-                str(self.pizza_bucks), True, WHITE)
-            self.bucks_rect = bucks_surf.get_rect()
-            self.bucks_rect.x = WINDOW_WIDTH - 50
-            self.bucks_rect.y = WINDOW_HEIGHT - 50
-            game_window.blit(bucks_surf, self.bucks_rect)
+        bucks_surf = self.display_font.render (\
+            str(self.pizza_bucks), True, WHITE)
+        
+        #Create a rect for bucks_surf
+        self.bucks_rect = bucks_surf.get_rect()
+
+        #Place the counter in the middle of the tile on the 
+        # bottom-right corner
+        self.bucks_rect.x = WINDOW_WIDTH - 50
+        self.bucks_rect.y = WINDOW_HEIGHT - 50
+
+        #Display new pizza bucks total to game window
+        game_window.blit(bucks_surf, self.bucks_rect)
     
     #Increment the loop counter and call the other Counters methods
     def update(self, game_window):
@@ -118,7 +132,7 @@ class Counters(object):
         self.increment_bucks()
         self.draw_bucks(game_window)
 
-#Create a background tile object
+#Create a background tile object-----------------------------------
 class BackgroundTile(sprite.Sprite):
 
     #Set up instances of background tiles
@@ -127,7 +141,7 @@ class BackgroundTile(sprite.Sprite):
         self.effect = False
         self.rect = rect
 
-#---------------------------------------------------
+#------------------------------------------------------------------
 #Create class instances and groups
 
 #Create a group for all the VampireSprite instances
@@ -137,7 +151,7 @@ all_vampires = sprite.Group()
 counters = Counters(STARTING_BUCKS, BUCK_RATE, \
     STARTING_BUCK_BOOSTER)
 
-#---------------------------------------------------
+#-----------------------------------------------------------------
 #Initialize and draw the background grid
 
 #Create empty list to hold tile grid
@@ -150,14 +164,17 @@ tile_color = WHITE
 for row in range(6):
     row_of_tiles = []
     tile_grid.append(row_of_tiles)
+
     for column in range(11):
         #Create an invisible rect for each background
         # tile sprite
         tile_rect = Rect(WIDTH * column, HEIGHT * row,\
             WIDTH, HEIGHT)
+
         #For each column in each row, create a new 
         # background tile sprite
         new_tile = BackgroundTile(tile_rect)
+
         #Add each background tile sprite to the correct
         # row_of_tiles list
         row_of_tiles.append(new_tile)
@@ -167,7 +184,7 @@ for row in range(6):
 #Display the background image to the screen
 GAME_WINDOW.blit(BACKGROUND, (0,0))
 
-#---------------------------------------------------
+#-----------------------------------------------------------------
 #Game loop
 
 #Define the conditions for running the loop
@@ -176,7 +193,7 @@ game_running = True
 #Start game loop
 while game_running:
 
-    #-----------------------------------------------
+    #------------------------------------------------------------
     #Check for events
 
     #Start loop to check for and handle events
@@ -201,13 +218,13 @@ while game_running:
             tile_x = x // 100
             tile_grid[tile_y][tile_x].effect = True
 
-    #------------------------------------------------
+    #-----------------------------------------------------------
     #Spawn sprites
 
     #Spawn vampire pizza sprites
     if randint(1, SPAWN_RATE) == 1:
         VampireSprite()
-    #------------------------------------------------
+    #------------------------------------------------------------
     #Set up collision detection
     
     #Set up detection for collision with background tiles
@@ -224,7 +241,7 @@ while game_running:
         vamp_right_side = (vampire.rect.x + \
             vampire.rect.width) // 100
         
-        #-------------------------------------------------
+        #---------------------------------------------------------
         #Identify the tiles on the left and right sides
         
         #If the vampire sprite is on the grid, find which 
@@ -245,7 +262,7 @@ while game_running:
         else:
             right_tile = None
 
-        #--------------------------------------------------
+        #---------------------------------------------------------
         #Test for collision
 
         #Test if the left side of the vampire pizza is 
@@ -262,12 +279,12 @@ while game_running:
             if right_tile != left_tile:
                 #If both are true, change speed to 1.
                 vampire.speed = SLOW_SPEED
-                
+
         #Delete the vampire sprite when it leaves the screen
         if vampire.rect.x <= 0:
             vampire.kill()
 
-    #------------------------------------------------
+    #------------------------------------------------------------
     #Update displays
 
     #Update enemies
@@ -284,7 +301,7 @@ while game_running:
     clock.tick(FRAME_RATE)
 
 #Close main game loop
-#----------------------------------------------------
+#----------------------------------------------------------------
 
 #Clean up game
 pygame.quit()
