@@ -74,6 +74,15 @@ class VampireSprite(sprite.Sprite):
         #Update the sprite image to the new location
         game_window.blit(self.image, (self.rect.x, self.rect.y))
 
+#Create a background tile object
+class BackgroundTile(sprite.Sprite):
+
+    #Set up instances of background tiles
+    def __init__(self, rect):
+        super().__init__()
+        self.effect = False
+        self.rect = rect
+
 #---------------------------------------------------
 #Create class instances and groups
 
@@ -83,12 +92,21 @@ all_vampires = sprite.Group()
 #---------------------------------------------------
 #Initialize and draw the background grid
 
+#Create empty list to hold tile grid
+tile_grid = []
+
 #Define the color of the gird outline
 tile_color = WHITE
 
 #Populate the background grid
 for row in range(6):
+    row_of_tiles = []
+    tile_grid.append(row_of_tiles)
     for column in range(11):
+        tile_rect = Rect(WIDTH * column, HEIGHT * row,\
+            WIDTH, HEIGHT)
+        new_tile = BackgroundTile(tile_rect)
+        row_of_tiles.append(new_tile)
         draw.rect(BACKGROUND, tile_color,\
             (WIDTH * column, HEIGHT * row, WIDTH, HEIGHT), 1)
 
@@ -113,6 +131,17 @@ while game_running:
         #Exit loop when the game window closes
         if event.type == QUIT:
             game_running = False
+
+        #Set up the background tiles to respond to mouse clicks
+        elif event.type == MOUSEBUTTONDOWN:
+            coordinates = mouse.get_pos()
+            x = coordinates[0]
+            y = coordinates[1]
+            tile_y = y // 100
+            tile_x = x // 100
+            tile_grid[tile_y][tile_x].effect = True
+            print('Clicked tile')
+
 
     #------------------------------------------------
     #Spawn sprites
