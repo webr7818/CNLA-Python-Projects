@@ -1,4 +1,10 @@
-#Set up game
+#"Attack of the Vampire Pizzas!"
+#Based on "Code this Game" by Meg Ray
+#Coding done by Sensei Reiden
+#Utilizes Pygame libraries
+#7/23/2020
+
+#------------------------------------------------------------ Import Libraries & Initialization
 
 #Import libraries
 import pygame
@@ -11,8 +17,7 @@ pygame.init()
 #Set up clock
 clock = time.Clock()
 
-#------------------------------------------------------------
-#Define constant variables
+#------------------------------------------------------------ Constant Variables
 
 #Define the parameters of the game window
 WINDOW_WIDTH = 1100
@@ -27,7 +32,7 @@ HEIGHT = 100
 WHITE = (255, 255, 255)
 
 #Set up rates
-SPAWN_RATE = 360
+SPAWN_RATE = 20
 FRAME_RATE = 60
 
 #Set up counters
@@ -39,8 +44,7 @@ STARTING_BUCK_BOOSTER = 1
 REG_SPEED = 2
 SLOW_SPEED = 1
 
-#----------------------------------------------------------------
-#Load assests
+#---------------------------------------------------------------- Asset Loading
 
 #Create the game window
 GAME_WINDOW = display.set_mode(WINDOW_RES)
@@ -71,10 +75,7 @@ pepperoni_img = image.load('Assets/pepperoni.png')
 pepperoni_surf = Surface.convert_alpha(pepperoni_img)
 PEPPERONI = transform.scale(pepperoni_surf,(WIDTH, HEIGHT))
 
-#----------------------------------------------------------------
-#Set up class objects
-
-#Create an enemy object
+#----------------------------------------------------------------- VampireSprite Subclass
 class VampireSprite(sprite.Sprite):
 
     #Set up enemy instances
@@ -86,19 +87,31 @@ class VampireSprite(sprite.Sprite):
         self.image = VAMPIRE_PIZZA.copy()
         y = 50 + self.lane * 100
         self.rect = self.image.get_rect(center = (1100, y))
+        self.health = 100
     
     #Set up enemy movement
-    def update(self, game_window):
+    def update(self, game_window, counters):
         
         #Erase the last sprite image
         game_window.blit(BACKGROUND,\
             (self.rect.x, self.rect.y), self.rect)
         #Move the sprites
         self.rect.x -= self.speed
-        #Update the sprite image to the new location
-        game_window.blit(self.image, (self.rect.x, self.rect.y))
+        #Destroys sprite when at 0 health
+        if self.health <= 0 or self.rect.x <= 100:
+            self.kill()
+        else: #Updates image
+            game_window.blit(self.image, (self.rect.x, \
+                self.rect.y))
 
-#Create an object for tracking the game state-------------------
+    #Apply trap effects to enemies
+    def attack(self, tile):
+        if tile.trap == SLOW:
+            self.speed = SLOW_SPEED
+        if tile.trap == DAMAGE:
+            self.health -= 1
+
+#------------------------------------------------------------------- Counters Class
 class Counters(object):
 
     #Set up instances of counters
@@ -147,7 +160,7 @@ class Counters(object):
         self.increment_bucks()
         self.draw_bucks(game_window)
 
-#Create a base trap object-----------------------------------------
+#------------------------------------------------------------------ Trap Class
 class Trap(object):
 
     #Set up instances of each kind of trap
@@ -156,7 +169,7 @@ class Trap(object):
         self.cost = cost
         self.trap_img = trap_img
 
-#Create an object that activates traps-----------------------------
+#------------------------------------------------------------------ TrapApplicator Class
 class TrapApplicator(object):
 
     #Set up TrapApplicator instances
@@ -170,19 +183,65 @@ class TrapApplicator(object):
 
     #Places the selected trap on a specific tile
     def select_tile(self, tile, counters):
-        self.selected = tile.set_trap(self.selected, counters)      #missing set_trap()
+        self.selected = tile.set_trap(self.selected, counters)
 
-#Create a background tile object-----------------------------------
+#------------------------------------------------------------------ BackgroundTile Class
 class BackgroundTile(sprite.Sprite):
 
-    #Set up instances of background tiles
+    #Sets up instances of background tiles
     def __init__(self, rect):
         super().__init__()
-        self.effect = False
+        self.trap = None
         self.rect = rect
 
-#------------------------------------------------------------------
-#Create class instances and groups
+#------------------------------------------------------------------ PlayTile Subclass
+class PlayTile(BackgroundTile): #Sets up tiles in the play area
+
+    #Set the trap on the selected play tile
+    def set_trap(self, trap, counters):
+        if bool(trap) and not bool(self.trap):
+            counters.pizza_bucks -= trap.cost
+            self.trap = trap 
+            if trap == EARN:
+                counters.buck_booster += 1
+        #If conditions are not met, nothing happens.
+        return None
+    
+    #Draw the trap image to the selected play tile
+    def draw_trap(self, game_window, trap_applicator):
+        if bool(self.trap):
+            game_window.blit(self.trap.trap_img, \
+                (self.rect.x, self.rect.y))
+
+#--------------------------------------------------------------------- ButtonTile Subclass
+class ButtonTile(BackgroundTile): #Sets up trap tiles
+
+    #Enables selection of trap
+    def set_trap(self, trap, counters):
+        if counters.pizza_bucks >= self.trap.cost:
+            return self.trap
+        else:
+            return None
+
+    #Highlights the trap button that was clicked
+    def draw_trap(self, game_window, trap_applicator):
+        if bool(trap_applicator.selected):
+            if trap_applicator.selected == self.trap:
+                draw.rect(game_window, (238, 190, 47), \
+                    (self.rect.x, self.rect.y, WIDTH, HEIGHT), 5)
+    
+#---------------------------------------------------------------------- InactiveTile Subclass
+class InactiveTile(BackgroundTile): #Sets up non-interactive tiles
+
+    #Do nothing if clicked
+    def set_trap(self, trap, counters):
+        return None
+    
+    #Do not display anything
+    def draw_trap(self, game_window, trap_applicator):
+        pass
+
+#---------------------------------------------------------------------- Class Instances & Groups
 
 #Create a group for all the VampireSprite instances
 all_vampires = sprite.Group()
@@ -193,18 +252,16 @@ DAMAGE = Trap('DAMAGE', 3, CUTTER)
 EARN = Trap('EARN', 7, PEPPERONI)
 
 #Instance for TrapApplicator
-trap_applicator = TrapApplicatior()
+trap_applicator = TrapApplicator()
 
 #Create an instance of Counters
 counters = Counters(STARTING_BUCKS, BUCK_RATE, \
     STARTING_BUCK_BOOSTER)
 
-#-----------------------------------------------------------------
-#Initialize and draw the background grid
+#----------------------------------------------------------------- Background Grid
 
 #Create empty list to hold tile grid
 tile_grid = []
-
 #Define the color of the gird outline
 tile_color = WHITE
 
@@ -216,24 +273,49 @@ for row in range(6):
     for column in range(11):
         #Create an invisible rect for each background
         # tile sprite
-        tile_rect = Rect(WIDTH * column, HEIGHT * row,\
+        tile_rect = Rect(WIDTH * column, HEIGHT * row, \
             WIDTH, HEIGHT)
 
-        #For each column in each row, create a new 
-        # background tile sprite
-        new_tile = BackgroundTile(tile_rect)
+        #Creates InactiveTiles for the first two columns
+        if column <= 1:
+            new_tile = InactiveTile(tile_rect)
+        else:
+            #Tests for bottom row
+            if row == 5:
+                #Tests for tiles in columns 2, 3, and 4
+                if 2 <= column <= 4:
+                    new_tile = ButtonTile(tile_rect)
+                    #Each button is assigned the corresponding 
+                    # data type
+                    new_tile.trap = [SLOW, DAMAGE, EARN][column-2]
+                else:
+                    #Creates InactiveTiles for the rest in row 5
+                    new_tile = InactiveTile(rect)
+            else:
+                #Remaining space turns into PlayTiles
+                new_tile = PlayTile(tile_rect)
 
         #Add each background tile sprite to the correct
         # row_of_tiles list
         row_of_tiles.append(new_tile)
-        draw.rect(BACKGROUND, tile_color,\
-            (WIDTH * column, HEIGHT * row, WIDTH, HEIGHT), 1)
+
+        #Tests if tile is one of 3 buttons
+        if row == 5 and 2 <= column <= 4:
+            #Displays correct image on each button
+            BACKGROUND.blit(new_tile.trap.trap_img, \
+                (new_tile.rect.x, new_tile.rect.y))
+        
+        #Displays the background image anywhere else
+        if column != 0 and row != 5:
+            if column != 1:
+                draw.rect(BACKGROUND, tile_color,\
+                    (WIDTH * column, HEIGHT * row, \
+                        WIDTH, HEIGHT), 1)
 
 #Display the background image to the screen
 GAME_WINDOW.blit(BACKGROUND, (0,0))
 
-#-----------------------------------------------------------------
-#Game loop
+#----------------------------------------------------------------- Game Loop
 
 #Define the conditions for running the loop
 game_running = True
@@ -241,8 +323,7 @@ game_running = True
 #Start game loop
 while game_running:
 
-    #------------------------------------------------------------
-    #Check for events
+    #------------------------------------------------------------ Check for Events
 
     #Start loop to check for and handle events
     for event in pygame.event.get():
@@ -268,78 +349,68 @@ while game_running:
             trap_applicator.select_tile(tile_grid[tile_y] \
                 [tile_x], counters)
 
-    #-----------------------------------------------------------
-    #Spawn sprites
+    #----------------------------------------------------------- Spawning Sprites
 
     #Spawn vampire pizza sprites
     if randint(1, SPAWN_RATE) == 1:
         VampireSprite()
-    #------------------------------------------------------------
-    #Set up collision detection
+
+    #------------------------------------------------------------ Collision Detection
     
+    #Draws the background grid
+    for tile_row in tile_grid:
+        for tile in tile_row:
+            if bool(tile.trap):
+                GAME_WINDOW.blit(BACKGROUND, (tile.rect.x, \
+                    tile.rect.y), tile.rect)
+
     #Set up detection for collision with background tiles
     for vampire in all_vampires:
-        #Store vampire positions
         
-        #Store the row where the vampire sprite is located
+        #Stores location of enemy's row
         tile_row = tile_grid[vampire.rect.y // 100]
-        #Store the current location of the right edge of 
-        # the vampire sprite
+        #Stores location of enemy's left side
         vamp_left_side = vampire.rect.x // 100
-        #Store the current location of the right edge of
-        # the vampire sprite
+        #Stores location of enemy's right side
         vamp_right_side = (vampire.rect.x + \
             vampire.rect.width) // 100
         
-        #---------------------------------------------------------
-        #Identify the tiles on the left and right sides
-        
-        #If the vampire sprite is on the grid, find which 
-        # column the left side is on.
+        #If left side is on the grid...
         if 0 <= vamp_left_side <= 10:
+            #Store tile to the left
             left_tile = tile_row[vamp_left_side]
-        #Return no column if the vampire sprite is not 
-        # on the grid
-        else:
+        else: #Otherwise return no column
             left_tile = None
 
-        #If the vampire sprite is on the grid, find which 
-        # column the right side is on.
+        #If right side is on the grid...
         if 0 <= vamp_right_side <= 10:
+            #Store tile to the right
             right_tile = tile_row[vamp_right_side]
-        #Return no column if the vampire sprite is not 
-        # on the grid
-        else:
+        else: #Otherwise return no column
             right_tile = None
 
-        #---------------------------------------------------------
-        #Test for collision
+        #If touching a tile to the left...
+        if bool(left_tile):
+            #Attack if there's a trap
+            vampire.attack(left_tile)
 
-        #Tests if the left side of the vampire pizza is 
-        # touching a tile and if that tile has been clicked.
-        if bool(left_tile) and left_tile.effect:
-            #If true, change the vampire speed to 1.
-            vampire.speed = SLOW_SPEED
-
-        #Tests if the right side of the vampire pizza is 
-        # touching a tile and if that tile has been clicked.
-        if bool(right_tile) and right_tile.effect:
-            #Tests if the right and left sides of the sprite 
-            # are touching different tiles
+        #If touching a tile to the right...
+        if bool(right_tile):
+            #If both sides are not on the same tile...
             if right_tile != left_tile:
-                #If both are true, changes speed to 1.
-                vampire.speed = SLOW_SPEED
+                #Attack if there's a trap
+                vampire.attack(right_tile)
 
-        #Deletes the vampire sprite when it leaves the screen
-        if vampire.rect.x <= 0:
-            vampire.kill()
-
-    #------------------------------------------------------------
-    #Update displays
+    #------------------------------------------------------------ Update Displays
 
     #Update enemies
     for vampire in all_vampires:
-        vampire.update(GAME_WINDOW)
+        vampire.update(GAME_WINDOW, counters)
+
+    #Update traps that have been set
+    for tile_row in tile_grid:
+        for tile in tile_row:
+            tile.draw_trap(GAME_WINDOW, trap_applicator)
 
     #Update counters
     counters.update(GAME_WINDOW)
@@ -350,8 +421,7 @@ while game_running:
     #Set the FPS
     clock.tick(FRAME_RATE)
 
-#Close main game loop
-#----------------------------------------------------------------
+#---------------------------------------------------------------- End of Loop
 
-#Clean up game
+#Game clean up
 pygame.quit()
