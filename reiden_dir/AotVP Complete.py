@@ -4,7 +4,7 @@
 #Utilizes Pygame libraries
 #7/23/2020
 
-#------------------------------------------------------------ Import Libraries & Initialization
+#------------------------------------------------------------------ Import Libraries & Initialization
 
 #Import libraries
 import pygame
@@ -17,7 +17,7 @@ pygame.init()
 #Initialize Clock
 clock = time.Clock()
 
-#------------------------------------------------------------ Constant Variables
+#------------------------------------------------------------------ Constant Variables
 
 #Game Window Parameters
 WINDOW_WIDTH = 1100
@@ -44,7 +44,7 @@ STARTING_BUCK_BOOSTER = 1
 REG_SPEED = 2
 SLOW_SPEED = 1
 
-#---------------------------------------------------------------- Asset Loading
+#------------------------------------------------------------------ Asset Loading
 
 #Game window
 GAME_WINDOW = display.set_mode(WINDOW_RES)
@@ -75,7 +75,7 @@ pepperoni_img = image.load('Assets/pepperoni.png')
 pepperoni_surf = Surface.convert_alpha(pepperoni_img)
 PEPPERONI = transform.scale(pepperoni_surf,(WIDTH, HEIGHT))
 
-#----------------------------------------------------------------- VampireSprite Subclass
+#------------------------------------------------------------------ VampireSprite Subclass
 class VampireSprite(sprite.Sprite):
 
     #METHOD: Sets up enemy instances
@@ -110,7 +110,7 @@ class VampireSprite(sprite.Sprite):
         if tile.trap == DAMAGE:
             self.health -= 1
 
-#------------------------------------------------------------------- Counters Class
+#------------------------------------------------------------------ Counters Class
 class Counters(object):
 
     #METHOD: Sets up instances of counters
@@ -209,7 +209,7 @@ class PlayTile(BackgroundTile): #Sets up tiles in the play area
             game_window.blit(self.trap.trap_img, \
                 (self.rect.x, self.rect.y))
 
-#--------------------------------------------------------------------- ButtonTile Subclass
+#------------------------------------------------------------------ ButtonTile Subclass
 class ButtonTile(BackgroundTile): #Sets up trap tiles
 
     #METHOD: Enables selection of trap
@@ -226,7 +226,7 @@ class ButtonTile(BackgroundTile): #Sets up trap tiles
                 draw.rect(game_window, (238, 190, 47), \
                     (self.rect.x, self.rect.y, WIDTH, HEIGHT), 5)
     
-#---------------------------------------------------------------------- InactiveTile Subclass
+#------------------------------------------------------------------ InactiveTile Subclass
 class InactiveTile(BackgroundTile): #Sets up non-interactive tiles
 
     #METHOD: Do nothing if clicked
@@ -237,7 +237,7 @@ class InactiveTile(BackgroundTile): #Sets up non-interactive tiles
     def draw_trap(self, game_window, trap_applicator):
         pass
 
-#---------------------------------------------------------------------- Class Instances & Groups
+#------------------------------------------------------------------ Class Instances & Groups
 
 #Group of all Vampire instances
 all_vampires = sprite.Group()
@@ -254,7 +254,7 @@ trap_applicator = TrapApplicator()
 counters = Counters(STARTING_BUCKS, BUCK_RATE, \
     STARTING_BUCK_BOOSTER)
 
-#----------------------------------------------------------------- Background Grid
+#------------------------------------------------------------------ Background Grid
 
 #Creates an empty list to hold the tile grid
 tile_grid = []
@@ -305,7 +305,7 @@ for row in range(6):
 #Displays background image to the screen
 GAME_WINDOW.blit(BACKGROUND, (0,0))
 
-#----------------------------------------------------------------- Game Loop
+#------------------------------------------------------------------ Game Loop
 
 #Defines the conditions for running the loop
 game_running = True
@@ -313,7 +313,7 @@ game_running = True
 #Starts game loop
 while game_running:
 
-    #------------------------------------------------------------ Check for Events
+    #-------------------------------------------------------------- Check for Events
 
     #Starts loop to check for and handle events
     for event in pygame.event.get():
@@ -338,13 +338,13 @@ while game_running:
             trap_applicator.select_tile(tile_grid[tile_y] \
                 [tile_x], counters)
 
-    #----------------------------------------------------------- Spawning Sprites
+    #-------------------------------------------------------------- Spawning Sprites
 
     #Spawns vampire pizza sprites
     if randint(1, SPAWN_RATE) == 1:
         VampireSprite()
 
-    #------------------------------------------------------------ Collision Detection
+    #-------------------------------------------------------------- Collision Detection
     
     #Draws the background grid
     for tile_row in tile_grid:
@@ -390,7 +390,7 @@ while game_running:
                 #Attack if there's a trap
                 vampire.attack(right_tile)
 
-    #------------------------------------------------------------ Update Displays
+    #-------------------------------------------------------------- Update Displays
 
     #Updates enemies
     for vampire in all_vampires:
@@ -410,7 +410,7 @@ while game_running:
     #Sets the FPS
     clock.tick(FRAME_RATE)
 
-#---------------------------------------------------------------- End of Loop
+#------------------------------------------------------------------ End of Loop
 
 #Game clean up
 pygame.quit()
