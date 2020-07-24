@@ -56,6 +56,21 @@ pizza_img = image.load('Assets/vampire.png')
 pizza_surf = Surface.convert_alpha(pizza_img)
 VAMPIRE_PIZZA = transform.scale(pizza_surf, (WIDTH, HEIGHT))
 
+#Garlic image
+garlic_img = image.load('Assets/garlic.png')
+garlic_surf = Surface.convert_alpha(garlic_img)
+GARLIC = transform.scale(garlic_surf, (WIDTH, HEIGHT))
+
+#Pizza Cutter image
+cutter_img = image.load('Assets/pizzacutter.png')
+cutter_surf = Surface.convert_alpha(cutter_img)
+CUTTER = transform.scale(cutter_surf, (WIDTH, HEIGHT))
+
+#Pepperoni
+pepperoni_img = image.load('Assets/pepperoni.png')
+pepperoni_surf = Surface.convert_alpha(pepperoni_img)
+PEPPERONI = transform.scale(pepperoni_surf,(WIDTH, HEIGHT))
+
 #----------------------------------------------------------------
 #Set up class objects
 
