@@ -147,6 +147,29 @@ class Counters(object):
         self.increment_bucks()
         self.draw_bucks(game_window)
 
+#Create a base trap object-----------------------------------------
+class Trap(object):
+
+    def __init__(self, trap_kind, cost, trap_img):
+        self.trap_kind= trap_kind
+        self.cost = cost
+        self.trap_img = trap_img
+
+#Create an object to apply traps onto the grid--------------------
+class TrapApplicator(object):
+
+    def __init__(self):
+        self.selected = None
+
+    #Selects trap if it is affordable
+    def select_trap(self, trap):
+        if trap.cost <= counters.pizza_bucks:
+            self.selected = trap
+
+    #Places the selected trap on the selected tile
+    def select_tile(self, tile, counters):
+        self.selected = tile.set_trap(self.selected, counters)
+
 #Create a background tile object-----------------------------------
 class BackgroundTile(sprite.Sprite):
 
@@ -161,6 +184,14 @@ class BackgroundTile(sprite.Sprite):
 
 #Create a group for all the VampireSprite instances
 all_vampires = sprite.Group()
+
+#Create instances for each trap type
+SLOW = Trap('SLOW', 5, GARLIC)
+DAMAGE = Trap('DAMAGE', 3, CUTTER)
+EARN = Trap('EARN', 7, PEPPERONI)
+
+#Instance for TrapApplicator
+trap_applicator = TrapApplicatior()
 
 #Create an instance of Counters
 counters = Counters(STARTING_BUCKS, BUCK_RATE, \
