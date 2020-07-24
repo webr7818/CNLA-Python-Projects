@@ -1,4 +1,7 @@
-#Set up game
+#CHAPTER 11: Applying Traps
+#CNLA Sensei Copy
+#NOTE: Do not run program. Current program is missing elements 
+# from future chapters.
 
 #Import libraries
 import pygame
