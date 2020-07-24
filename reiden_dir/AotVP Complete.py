@@ -1,8 +1,5 @@
-#"Attack of the Vampire Pizzas!"
-#Based on "Code this Game" by Meg Ray
-#Coding done by Sensei Reiden
-#Utilizes Pygame libraries
-#7/23/2020
+#CHAPTER 12: Connecting Traps to the Grid
+#NOTE: Program is runnable
 
 #------------------------------------------------------------ Import Libraries & Initialization
 
