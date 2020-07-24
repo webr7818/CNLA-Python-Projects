@@ -19,12 +19,12 @@ clock = time.Clock()
 
 #------------------------------------------------------------------ Constant Variables
 
-#Game Window Parameters
+#Game window parameters
 WINDOW_WIDTH = 1100
 WINDOW_HEIGHT = 600
 WINDOW_RES = (WINDOW_WIDTH, WINDOW_HEIGHT)
 
-#Tile Parameters
+#Tile parameters
 WIDTH = 100
 HEIGHT = 100
 
@@ -39,6 +39,11 @@ FRAME_RATE = 60
 STARTING_BUCKS = 15
 BUCK_RATE = 120
 STARTING_BUCK_BOOSTER = 1
+
+#Win/lose conditions
+MAX_BAD_REVIEWS = 3
+MINUTE = FRAME_RATE * 60
+WIN_TIME = MINUTE * 3
 
 #Defined speeds
 REG_SPEED = 2
@@ -96,9 +101,12 @@ class VampireSprite(sprite.Sprite):
             (self.rect.x, self.rect.y), self.rect)
         #Moves the sprites
         self.rect.x -= self.speed
-        #Destroys sprite when at 0 health
+        #Destroys sprite when at 0 health or at end
         if self.health <= 0 or self.rect.x <= 100:
             self.kill()
+            #Increases bad reviews if enemy reaches end
+            if self.rect.x <= 100:
+                counters.bad_reviews += 1
         else: #Updates image
             game_window.blit(self.image, (self.rect.x, \
                 self.rect.y))
@@ -114,7 +122,7 @@ class VampireSprite(sprite.Sprite):
 class Counters(object):
 
     #METHOD: Sets up instances of counters
-    def __init__(self, pizza_bucks, buck_rate, buck_booster):
+    def __init__(self, pizza_bucks, buck_rate, buck_booster, timer):
         #Starts the game loop counter at 0
         self.loop_count = 0
         #Sets up the font of the counter on the screen
@@ -124,6 +132,10 @@ class Counters(object):
         self.buck_rate = buck_rate
         self.buck_booster = buck_booster
         self.bucks_rect = None
+        self.timer = timer
+        self.timer_rect = None
+        self.bad_reviews = 0
+        self.bad_rev_rect = None
 
     #METHOD: Sets the rate that the player earns pizza bucks
     def increment_bucks(self):
@@ -132,22 +144,59 @@ class Counters(object):
         if self.loop_count % self.buck_rate == 0:
             self.pizza_bucks += self.buck_booster
     
-    #METHOD: Displays pizza bucks total on the screen
+    #METHOD: Displays pizza bucks total to the screen
     def draw_bucks(self, game_window):
-        #Erases the last number from the game window
+        #Tests if there is a new number of pizza bucks
         if bool(self.bucks_rect):
+            #Erases old number
             game_window.blit(BACKGROUND, (self.bucks_rect.x, \
                 self.bucks_rect.y), self.bucks_rect)
+        #Tells program what font & color to use in display
         bucks_surf = self.display_font.render (\
             str(self.pizza_bucks), True, WHITE)
-        #Creates a rect for bucks_surf
+        #Sets up a rect to interact with the number
         self.bucks_rect = bucks_surf.get_rect()
-        #Places the counter in the middle of the tile on the 
-        # bottom-right corner
+        #Places display in the bucks section
         self.bucks_rect.x = WINDOW_WIDTH - 50
         self.bucks_rect.y = WINDOW_HEIGHT - 50
-        #Display new pizza bucks total to game window
+        #Displays new pizza bucks total to game window
         game_window.blit(bucks_surf, self.bucks_rect)
+    
+    #METHOD: Displays bad reviews total to the screen
+    def draw_bad_reviews(self, game_window):
+        #Tests if there's a new number of bad reviews
+        if bool(self.bad_rev_rect):
+            #Erases old number
+            game_window.blit(BACKGROUND, (self.bad_rev_rect.x, \
+                self.bad_rev_rect.y), self.bad_rev_rect)
+        #Tells program what font & color to use in display
+        bad_rev_surf = self.display_font.render( \
+            str(self.bad_reviews), True, WHITE)
+        #Sets up a rect to interact with the number
+        self.bad_rev_rect = bad_rev_surf.get_rect()
+        #Places display in the bad reviews section
+        self.bad_rev_rect.x = WINDOW_WIDTH - 150
+        self.bad_rev_rect.y = WINDOW_HEIGHT - 50
+        #Displays new bad reviews total to game window
+        game_window.blit(bad_rev_surf, self.bad_rev_rect)
+
+    #METHOD: Displays timer to the screen
+    def draw_timer(self, game_window):
+        #Tests if time has passed
+        if bool(self.timer_rect):
+            #Erases old number
+            game_window.blit(BACKGROUND, (self.timer_rect.x, \
+                self.timer_rect.y), self.timer_rect)
+        #Tells program what font & color to use in display
+        timer_surf = self.display_font.render( \
+            str(WIN_TIME - self.loop_count), True, WHITE)
+        #Sets up a rect to interact with the number
+        self.timer_rect = timer_surf.get_rect()
+        #Places display in the timer section
+        self.timer_rect.x = WINDOW_WIDTH - 250
+        self.timer_rect.y = WINDOW_HEIGHT - 50
+        #Displays new time to game window
+        game_window.blit(timer_surf, self.timer_rect)
     
     #METHOD: Increments the loop counter and calls the other 
     # Counters methods
@@ -155,6 +204,8 @@ class Counters(object):
         self.loop_count += 1
         self.increment_bucks()
         self.draw_bucks(game_window)
+        self.draw_bad_reviews(game_window)
+        self.draw_timer(game_window)
 
 #------------------------------------------------------------------ Trap Class
 class Trap(object):
