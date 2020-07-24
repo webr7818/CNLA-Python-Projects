@@ -4,6 +4,10 @@
 #Utilizes Pygame libraries
 #7/23/2020
 
+#NOTE: Some lines are broken up with a "\" at the end. This 
+# indicates that the line following the "\" is the continuation 
+# of the line before it.
+
 #------------------------------------------------------------------ Import Libraries & Initialization
 
 #Import libraries
@@ -39,11 +43,11 @@ FRAME_RATE = 60
 STARTING_BUCKS = 15
 BUCK_RATE = 120
 STARTING_BUCK_BOOSTER = 1
+ONE_MINUTE = FRAME_RATE * 60
 
 #Win/lose conditions
 MAX_BAD_REVIEWS = 3
-MINUTE = FRAME_RATE * 60
-WIN_TIME = MINUTE * 3
+WIN_TIME = ONE_MINUTE * 3
 
 #Defined speeds
 REG_SPEED = 2
@@ -188,8 +192,10 @@ class Counters(object):
             game_window.blit(BACKGROUND, (self.timer_rect.x, \
                 self.timer_rect.y), self.timer_rect)
         #Tells program what font & color to use in display
-        timer_surf = self.display_font.render( \
-            str(WIN_TIME - self.loop_count), True, WHITE)
+        timer_surf = self.display_font.render(str( \
+            #Displays how much time is left in seconds
+            (WIN_TIME - self.loop_count) // FRAME_RATE), \
+                True, WHITE)
         #Sets up a rect to interact with the number
         self.timer_rect = timer_surf.get_rect()
         #Places display in the timer section
@@ -303,7 +309,7 @@ trap_applicator = TrapApplicator()
 
 #Instance for counters
 counters = Counters(STARTING_BUCKS, BUCK_RATE, \
-    STARTING_BUCK_BOOSTER)
+    STARTING_BUCK_BOOSTER, WIN_TIME)
 
 #------------------------------------------------------------------ Background Grid
 
@@ -360,6 +366,7 @@ GAME_WINDOW.blit(BACKGROUND, (0,0))
 
 #Defines the conditions for running the loop
 game_running = True
+program_running = True
 
 #Starts game loop
 while game_running:
@@ -372,6 +379,7 @@ while game_running:
         #Exits loop when the game window closes
         if event.type == QUIT:
             game_running = False
+            program_running = False
 
         #Sets up the background tiles to respond to mouse clicks
         elif event.type == MOUSEBUTTONDOWN:
@@ -441,6 +449,16 @@ while game_running:
                 #Attack if there's a trap
                 vampire.attack(right_tile)
 
+    #-------------------------------------------------------------- Win/Lose Conditions
+
+    #Lose Condition
+    if counters.bad_reviews >= MAX_BAD_REVIEWS:
+        game_running = False
+
+    #Win Condition
+    if counters.loop_count > WIN_TIME:
+        game_running = False
+
     #-------------------------------------------------------------- Update Displays
 
     #Updates enemies
@@ -461,7 +479,33 @@ while game_running:
     #Sets the FPS
     clock.tick(FRAME_RATE)
 
-#------------------------------------------------------------------ End of Loop
+#------------------------------------------------------------------ End-of-Game Initialization
+
+#Sets up endgame font
+end_font = font.Font('Assets/pizza_font.ttf', 50)
+
+#Tests if either win or lose condition has been met
+if program_running:
+    #If player lost...
+    if counters.bad_reviews >= MAX_BAD_REVIEWS:
+        #Ending message would read "Game Over"
+        end_surf = end_font.render('Game Over', True, WHITE)
+    else: #Otherwise ending message would read "You Win!"
+        end_surf = end_font.render('You Win!', True, WHITE)
+    #Displays saved message to game window
+    GAME_WINDOW.blit(end_surf, (350, 200))
+    display.update()
+
+#------------------------------------------------------------------ End-of-Game Loop
+
+#Starts Loop
+while program_running:
+    for event in pygame.event.get():
+        #Listens for QUIT event
+        if event.type == QUIT:
+            program_running = False
+    #Sets the frame rate
+    clock.tick(FRAME_RATE)
 
 #Game clean up
 pygame.quit()
