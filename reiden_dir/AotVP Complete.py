@@ -32,7 +32,7 @@ HEIGHT = 100
 WHITE = (255, 255, 255)
 
 #Rates
-SPAWN_RATE = 20
+SPAWN_RATE = 360
 FRAME_RATE = 60
 
 #Counters
