@@ -150,14 +150,16 @@ class Counters(object):
 #Create a base trap object-----------------------------------------
 class Trap(object):
 
+    #Set up instances of each kind of trap
     def __init__(self, trap_kind, cost, trap_img):
         self.trap_kind= trap_kind
         self.cost = cost
         self.trap_img = trap_img
 
-#Create an object to apply traps onto the grid--------------------
+#Create an object that activates traps-----------------------------
 class TrapApplicator(object):
 
+    #Set up TrapApplicator instances
     def __init__(self):
         self.selected = None
 
@@ -166,9 +168,9 @@ class TrapApplicator(object):
         if trap.cost <= counters.pizza_bucks:
             self.selected = trap
 
-    #Places the selected trap on the selected tile
+    #Places the selected trap on a specific tile
     def select_tile(self, tile, counters):
-        self.selected = tile.set_trap(self.selected, counters)
+        self.selected = tile.set_trap(self.selected, counters)      #missing set_trap()
 
 #Create a background tile object-----------------------------------
 class BackgroundTile(sprite.Sprite):
@@ -257,12 +259,14 @@ while game_running:
             coordinates = mouse.get_pos()
             x = coordinates[0]
             y = coordinates[1]
+
             #Find the background tile at the location where the 
             # mouse was clicked and change the value of 
             # effect to True
             tile_y = y // 100
             tile_x = x // 100
-            tile_grid[tile_y][tile_x].effect = True
+            trap_applicator.select_tile(tile_grid[tile_y] \
+                [tile_x], counters)
 
     #-----------------------------------------------------------
     #Spawn sprites
@@ -311,22 +315,22 @@ while game_running:
         #---------------------------------------------------------
         #Test for collision
 
-        #Test if the left side of the vampire pizza is 
+        #Tests if the left side of the vampire pizza is 
         # touching a tile and if that tile has been clicked.
         if bool(left_tile) and left_tile.effect:
             #If true, change the vampire speed to 1.
             vampire.speed = SLOW_SPEED
 
-        #Test if the right side of the vampire pizza is 
+        #Tests if the right side of the vampire pizza is 
         # touching a tile and if that tile has been clicked.
         if bool(right_tile) and right_tile.effect:
-            #Test if the right and left sides of the sprite 
+            #Tests if the right and left sides of the sprite 
             # are touching different tiles
             if right_tile != left_tile:
-                #If both are true, change speed to 1.
+                #If both are true, changes speed to 1.
                 vampire.speed = SLOW_SPEED
 
-        #Delete the vampire sprite when it leaves the screen
+        #Deletes the vampire sprite when it leaves the screen
         if vampire.rect.x <= 0:
             vampire.kill()
 
