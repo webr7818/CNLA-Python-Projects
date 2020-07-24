@@ -479,7 +479,7 @@ while game_running:
     #Sets the FPS
     clock.tick(FRAME_RATE)
 
-#------------------------------------------------------------------ End-of-Game Initialization
+#------------------------------------------------------------------ Endgame Message
 
 #Sets up endgame font
 end_font = font.Font('Assets/pizza_font.ttf', 50)
@@ -496,16 +496,17 @@ if program_running:
     GAME_WINDOW.blit(end_surf, (350, 200))
     display.update()
 
-#------------------------------------------------------------------ End-of-Game Loop
+#------------------------------------------------------------------ Endgame Loop
 
-#Starts Loop
+#Enables exit from end game message screen
 while program_running:
     for event in pygame.event.get():
         #Listens for QUIT event
         if event.type == QUIT:
             program_running = False
-    #Sets the frame rate
     clock.tick(FRAME_RATE)
 
-#Game clean up
+#------------------------------------------------------------------ Clean Up
+
+#Quits game
 pygame.quit()
