@@ -46,12 +46,12 @@ SLOW_SPEED = 1
 GAME_WINDOW = display.set_mode(WINDOW_RES)
 display.set_caption('Attack of the Vampire Pizzas!')
 
-#Set up the background image
+#Background image
 background_img = image.load('Assets/restaurant.jpg')
 background_surf = Surface.convert_alpha(background_img)
 BACKGROUND = transform.scale(background_surf, WINDOW_RES)
 
-#Set up the enemy image
+#Vampire Pizza image
 pizza_img = image.load('Assets/vampire.png')
 pizza_surf = Surface.convert_alpha(pizza_img)
 VAMPIRE_PIZZA = transform.scale(pizza_surf, (WIDTH, HEIGHT))
