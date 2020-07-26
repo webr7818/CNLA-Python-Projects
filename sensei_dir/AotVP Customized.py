@@ -36,22 +36,30 @@ HEIGHT = 100
 WHITE = (255, 255, 255)
 
 #Rates
-SPAWN_RATE = 360
+SPAWN_RATE = 240
 FRAME_RATE = 60
 
 #Counters
-STARTING_BUCKS = 15
-BUCK_RATE = 120
+STARTING_BUCKS = 20
+BUCK_RATE = 180
 STARTING_BUCK_BOOSTER = 1
 ONE_MINUTE = FRAME_RATE * 60
 
 #Win/lose conditions
-MAX_BAD_REVIEWS = 3
-WIN_TIME = ONE_MINUTE * 3
+MAX_BAD_REVIEWS = 5
+WIN_TIME = ONE_MINUTE * 1
 
 #Defined speeds
 REG_SPEED = 2
 SLOW_SPEED = 1
+
+#Sprite health
+VAMPIRE_HEALTH = 150
+
+#Trap costs
+GARLIC_COST = 5
+CUTTER_COST = 4
+PEPPERONI_COST = 6
 
 #------------------------------------------------------------------ Asset Loading
 
@@ -100,7 +108,7 @@ class VampireSprite(sprite.Sprite):
         self.image = VAMPIRE_PIZZA.copy()
         y = 50 + self.lane * 100
         self.rect = self.image.get_rect(center = (1100, y))
-        self.health = 100
+        self.health = VAMPIRE_HEALTH
     
     #METHOD: Sets up enemy movement
     def update(self, game_window, counters):
@@ -152,7 +160,7 @@ class Counters(object):
     #METHOD: Sets the rate that the player earns pizza bucks
     def increment_bucks(self):
         #Adds a set number of pizza bucks to the player's total 
-        # once every 120 times the game loop runs
+        # once every BUCK_RATE times the game loop runs
         if self.loop_count % self.buck_rate == 0:
             self.pizza_bucks += self.buck_booster
     
@@ -327,9 +335,9 @@ class InactiveTile(BackgroundTile):
 all_vampires = sprite.Group()
 
 #Trap type instances
-SLOW = Trap('SLOW', 5, GARLIC)
-DAMAGE = Trap('DAMAGE', 3, CUTTER)
-EARN = Trap('EARN', 7, PEPPERONI)
+SLOW = Trap('SLOW', GARLIC_COST, GARLIC)
+DAMAGE = Trap('DAMAGE', CUTTER_COST, CUTTER)
+EARN = Trap('EARN', PEPPERONI_COST, PEPPERONI)
 
 #Instance for TrapApplicator
 trap_applicator = TrapApplicator()
