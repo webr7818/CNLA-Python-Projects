@@ -111,6 +111,7 @@ class VampireSprite(sprite.Sprite):
         all_vampires.add(self)
         self.image = VAMPIRE_PIZZA.copy()
         y = 50 + self.lane * 100
+        #                                                               FIX ERROR
         self.pos = Vector2((1100, y))
         self.rect = self.image.get_rect(center = self.pos)
         self.health = VAMPIRE_HEALTH
@@ -120,11 +121,11 @@ class VampireSprite(sprite.Sprite):
         #Erases last sprite image
         game_window.blit(BACKGROUND,\
             (self.rect.x, self.rect.y), self.rect)
-        #Moves the sprites
-        move = Vector2((0, 0))
-        move += (-self.speed, 0)
-        move.normalize_ip()
-        self.pos += move
+        #Moves the sprites                                              FIX ERROR
+        #move = Vector2((0, 0))
+        #move += (-self.speed, 0)
+        #move.normalize_ip()
+        self.pos += (Vector2((-self.speed, 0)) * (clock.tick(FRAME_RATE) // 5))
         #Destroys sprite when at 0 health or at end
         if self.health <= 0 or self.rect.x <= 100:
             self.kill()
