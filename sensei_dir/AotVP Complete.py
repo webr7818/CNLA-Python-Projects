@@ -84,7 +84,11 @@ pepperoni_img = image.load('Assets/pepperoni.png')
 pepperoni_surf = Surface.convert_alpha(pepperoni_img)
 PEPPERONI = transform.scale(pepperoni_surf,(WIDTH, HEIGHT))
 
-#------------------------------------------------------------------ VampireSprite Subclass
+#------------------------------------------------------------------ VampireSprite Class
+
+#Creates instances of enemy type entities that move towards the 
+# left side of the screen. Instances also can suffer from trap 
+# effects. Does not take arguments.
 class VampireSprite(sprite.Sprite):
 
     #METHOD: Sets up enemy instances
@@ -123,6 +127,10 @@ class VampireSprite(sprite.Sprite):
             self.health -= 1
 
 #------------------------------------------------------------------ Counters Class
+
+#Creates an instance that keeps track of and displays 
+# the various counters in the game. Takes pizza_bucks, buck_rate, 
+# buck_booster, and timer arguments
 class Counters(object):
 
     #METHOD: Sets up instances of counters
@@ -214,6 +222,9 @@ class Counters(object):
         self.draw_timer(game_window)
 
 #------------------------------------------------------------------ Trap Class
+
+#Creates instances of different trap types. Takes trap_kind, cost, 
+# and trap_img arguments
 class Trap(object):
 
     #METHOD: Sets up instances of each kind of trap
@@ -223,6 +234,9 @@ class Trap(object):
         self.trap_img = trap_img
 
 #------------------------------------------------------------------ TrapApplicator Class
+
+#Creates an instance that selects and places traps on the play 
+# field. Does not take arguments
 class TrapApplicator(object):
 
     #METHOD: Sets up TrapApplicator instances
@@ -239,6 +253,8 @@ class TrapApplicator(object):
         self.selected = tile.set_trap(self.selected, counters)
 
 #------------------------------------------------------------------ BackgroundTile Class
+
+#Parent class for tile types. Takes a rect argument
 class BackgroundTile(sprite.Sprite):
 
     #METHOD: Sets up instances of background tiles
@@ -248,7 +264,10 @@ class BackgroundTile(sprite.Sprite):
         self.rect = rect
 
 #------------------------------------------------------------------ PlayTile Subclass
-class PlayTile(BackgroundTile): #Sets up tiles in the play area
+
+#Subclass of BackgroundTile class. Creates instances of tiles that 
+# allow placement of traps. Takes a rect argument.
+class PlayTile(BackgroundTile):
 
     #METHOD: Sets the trap on the selected play tile
     def set_trap(self, trap, counters):
@@ -267,7 +286,11 @@ class PlayTile(BackgroundTile): #Sets up tiles in the play area
                 (self.rect.x, self.rect.y))
 
 #------------------------------------------------------------------ ButtonTile Subclass
-class ButtonTile(BackgroundTile): #Sets up trap tiles
+
+#Subclass of BackgroundTile class. Creates instances of tiles that
+#  enables selection of traps and highlights when clicked. Takes a 
+# rect argument
+class ButtonTile(BackgroundTile):
 
     #METHOD: Enables selection of trap
     def set_trap(self, trap, counters):
@@ -284,7 +307,11 @@ class ButtonTile(BackgroundTile): #Sets up trap tiles
                     (self.rect.x, self.rect.y, WIDTH, HEIGHT), 5)
     
 #------------------------------------------------------------------ InactiveTile Subclass
-class InactiveTile(BackgroundTile): #Sets up non-interactive tiles
+
+#Subclass of BackgroundTile class. Creates instances of tiles that 
+# does nothing when clicked and does not display anything. Takes a 
+# rect argument
+class InactiveTile(BackgroundTile):
 
     #METHOD: Do nothing if clicked
     def set_trap(self, trap, counters):
