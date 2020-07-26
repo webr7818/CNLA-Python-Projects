@@ -8,6 +8,10 @@
 # indicates that the line following the "\" is the continuation 
 # of the line before it.
 
+#NOTE: Fix slow effect
+
+#NOTE: Fix pizza blit
+
 #------------------------------------------------------------------ Import Libraries & Initialization
 
 #Import libraries
@@ -36,7 +40,7 @@ HEIGHT = 100
 WHITE = (255, 255, 255)
 
 #Rates
-SPAWN_RATE = 240
+SPAWN_RATE = 100
 FRAME_RATE = 60
 
 #Counters
@@ -107,7 +111,8 @@ class VampireSprite(sprite.Sprite):
         all_vampires.add(self)
         self.image = VAMPIRE_PIZZA.copy()
         y = 50 + self.lane * 100
-        self.rect = self.image.get_rect(center = (1100, y))
+        self.pos = Vector2((1100, y))
+        self.rect = self.image.get_rect(center = self.pos)
         self.health = VAMPIRE_HEALTH
     
     #METHOD: Sets up enemy movement
@@ -116,7 +121,10 @@ class VampireSprite(sprite.Sprite):
         game_window.blit(BACKGROUND,\
             (self.rect.x, self.rect.y), self.rect)
         #Moves the sprites
-        self.rect.x -= self.speed
+        move = Vector2((0, 0))
+        move += (-self.speed, 0)
+        move.normalize_ip()
+        self.pos += move
         #Destroys sprite when at 0 health or at end
         if self.health <= 0 or self.rect.x <= 100:
             self.kill()
