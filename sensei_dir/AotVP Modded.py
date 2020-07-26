@@ -13,7 +13,7 @@
 #Import libraries
 import pygame
 from pygame import *
-from random import randint
+from random import randint, choice
 
 #Initialize Pygame
 pygame.init()
@@ -36,14 +36,15 @@ HEIGHT = 100
 WHITE = (255, 255, 255)
 
 #Rates
-SPAWN_RATE = 240
+SPAWN_RATE = 300
 FRAME_RATE = 60
 
 #Counters
 STARTING_BUCKS = 20
 BUCK_RATE = 180
-STARTING_BUCK_BOOSTER = 1
-STARTING_HEALTH = 150
+STARTING_BUCK_BOOSTER = 2
+EARN_BUCK_BOOSTER = 1
+STARTING_HEALTH = 400
 ONE_MINUTE = FRAME_RATE * 60
 
 #Win/lose conditions
@@ -51,13 +52,14 @@ MAX_BAD_REVIEWS = 5
 WIN_TIME = ONE_MINUTE * 1
 
 #Defined speeds
+FAST_SPEED = 3
 REG_SPEED = 2
 SLOW_SPEED = 1
 
 #Trap costs
-GARLIC_COST = 5
-CUTTER_COST = 4
-PEPPERONI_COST = 6
+GARLIC_COST = 8
+CUTTER_COST = 7
+PEPPERONI_COST = 15
 
 #------------------------------------------------------------------ Asset Loading
 
@@ -84,6 +86,11 @@ MED_HEALTH = transform.scale(med_health_surf, (WIDTH, HEIGHT))
 low_health_img = image.load('Assets/pizza30health.png')
 low_health_surf = Surface.convert_alpha(low_health_img)
 LOW_HEALTH = transform.scale(low_health_surf, (WIDTH, HEIGHT))
+
+#Were Pizza image
+were_img = image.load('Assets/were_pizza.png')
+were_surf = Surface.convert_alpha(were_img)
+WERE_PIZZA = transform.scale(were_surf, (WIDTH, HEIGHT))
 
 #Garlic image
 garlic_img = image.load('Assets/garlic.png')
@@ -131,10 +138,10 @@ class VampireSprite(sprite.Sprite):
             #Increases bad reviews if enemy reaches end
             if self.rect.x <= 100:
                 counters.bad_reviews += 1
-        else: #Updates image
-            if 33 < self.health * 100 // STARTING_HEALTH <= 66:
+        else: #Updates image based on health percentage
+            if 33 < self.health * 100 // STARTING_HEALTH <= 70:
                 self.image = MED_HEALTH.copy()
-            elif self.health * 100 // STARTING_HEALTH <= 33:
+            elif self.health * 100 // STARTING_HEALTH <= 35:
                 self.image = LOW_HEALTH.copy()
             game_window.blit(self.image, (self.rect.x, \
                 self.rect.y))
@@ -145,6 +152,25 @@ class VampireSprite(sprite.Sprite):
             self.speed = SLOW_SPEED
         if tile.trap == DAMAGE:
             self.health -= 1
+
+#------------------------------------------------------------------ WerePizza Subclass
+
+#Subclass based on VampirePizza class. Creates instances with a 
+# greater speed than normal vampire pizzas.
+class WerePizza(VampireSprite):
+    
+    #METHOD: Sets up Were Pizza instances
+    def __init__(self):
+        super(WerePizza, self).__init__()
+        self.speed = FAST_SPEED
+        self.image = WERE_PIZZA.copy()
+
+    #METHOD: Alters conditions for trap effects
+    def attack(self, tile):
+        if tile.trap == SLOW:
+            self.speed = REG_SPEED
+        if tile.trap == DAMAGE:
+            self.health -= 2
 
 #------------------------------------------------------------------ Counters Class
 
@@ -295,7 +321,7 @@ class PlayTile(BackgroundTile):
             counters.pizza_bucks -= trap.cost
             self.trap = trap 
             if trap == EARN:
-                counters.buck_booster += 1
+                counters.buck_booster += EARN_BUCK_BOOSTER
         #If conditions are not met, nothing happens.
         return None
     
@@ -345,6 +371,11 @@ class InactiveTile(BackgroundTile):
 
 #Group of all Vampire instances
 all_vampires = sprite.Group()
+
+enemy_types = []
+enemy_types.append(VampireSprite)
+enemy_types.append(VampireSprite)
+enemy_types.append(WerePizza)
 
 #Trap type instances
 SLOW = Trap('SLOW', GARLIC_COST, GARLIC)
@@ -448,7 +479,7 @@ while game_running:
 
     #Spawns vampire pizza sprites
     if randint(1, SPAWN_RATE) == 1:
-        VampireSprite()
+        choice(enemy_types)()
 
     #-------------------------------------------------------------- Collision Detection
     
