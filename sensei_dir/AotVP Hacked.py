@@ -44,9 +44,6 @@ STARTING_BUCKS = 20
 BUCK_RATE = 360
 STARTING_BUCK_BOOSTER = 2
 EARN_BUCK_BOOSTER = 1
-VAMPIRE_HEALTH = 150
-ZOMBIE_HEALTH = 200
-CTHULHU_HEALTH = 600
 ONE_MINUTE = FRAME_RATE * 60
 
 #Win/lose conditions
@@ -62,6 +59,18 @@ SLOW_SPEED = 1
 GARLIC_COST = 3
 CUTTER_COST = 5
 PEPPERONI_COST = 5
+TABLE_COST = 10
+CANNON_COST = 8
+
+#Cannon
+cannon_coordinates = []
+FIRE_RATE = 60
+
+#Health and Damage
+VAMPIRE_HEALTH = 150
+ZOMBIE_HEALTH = 200
+CTHULHU_HEALTH = 600
+ANCHOVY_DAMAGE = 10
 
 #------------------------------------------------------------------ Asset Loading
 
@@ -119,6 +128,26 @@ pepperoni_img = image.load('Assets/pepperoni.png')
 pepperoni_surf = Surface.convert_alpha(pepperoni_img)
 PEPPERONI = transform.scale(pepperoni_surf,(WIDTH, HEIGHT))
 
+#Mine image
+table_img = image.load('Assets/pizza-table.png')
+table_surf = Surface.convert_alpha(table_img)
+TABLE = transform.scale(table_surf,(WIDTH, HEIGHT))
+
+#Mine Explosion
+explosion_img = image.load('Assets/explosion.png')
+explosion_surf = Surface.convert_alpha(explosion_img)
+EXPLOSION = transform.scale(explosion_surf,(WIDTH, HEIGHT))
+
+#Cannon image
+cannon_img = image.load('Assets/anchovy-cannon.png')
+cannon_surf = Surface.convert_alpha(cannon_img)
+CANNON = transform.scale(cannon_surf,(WIDTH, HEIGHT))
+
+#Anchovy image
+anchovy_img = image.load('Assets/anchovy.png')
+anchovy_surf = Surface.convert_alpha(anchovy_img)
+ANCHOVY = transform.scale(anchovy_surf,(WIDTH, HEIGHT))
+
 #------------------------------------------------------------------ VampireSprite Class
 
 #Creates instances of enemy type entities that move towards the 
@@ -137,6 +166,7 @@ class VampireSprite(sprite.Sprite):
         self.rect = self.image.get_rect(center = (1100, y))
         self.health = VAMPIRE_HEALTH
         self.bad_rev = 1
+        self.despawn_wait = None
     
     #METHOD: Sets up enemy movement
     def update(self, game_window, counters):
@@ -145,19 +175,35 @@ class VampireSprite(sprite.Sprite):
             (self.rect.x, self.rect.y), self.rect)
         #Moves the sprites
         self.rect.x -= self.speed
-        #Destroys sprite when at 0 health or at end
-        if self.health <= 0 or self.rect.x <= 100:
-            self.kill()
-            #Increases bad reviews if enemy reaches end
-            if self.rect.x <= 100:
-                counters.bad_reviews += self.bad_rev
-        else: #Updates image based on health percentage
-            if 33 < self.health * 100 // VAMPIRE_HEALTH <= 70:
+        #Subtracts health when an anchovy hits a pizza
+        collided = sprite.spritecollide(self, all_anchovies, True)
+        if collided is not None:
+            for anchovy in collided:
+                self.health -= ANCHOVY_DAMAGE
+        #If the sprite reaches the pizza box, despawn_wait is 0
+        if self.rect.x <= 100:
+            counter.bad_reviews += 1
+            self.despawn_wait = 0
+        #If the sprite doesn't reach the box and has 0 health, 
+        # despawn_wait holds explosion image for 20 game loops
+        if self.despawn_wait is None:
+            if self.health <= 0:
+                self.image = EXPLOSION.copy()
+                self.speed = 0
+                self.despawn_wait = 20
+            #Updates image based on health percentage
+            elif 33 < self.health * 100 // VAMPIRE_HEALTH <= 70:
                 self.image = MED_HEALTH.copy()
             elif self.health * 100 // VAMPIRE_HEALTH <= 35:
                 self.image = LOW_HEALTH.copy()
             game_window.blit(self.image, (self.rect.x, \
                 self.rect.y))
+        #When despawn_wait = 0, sprite disappears
+        elif self.despawn_wait <= 0:
+            self.kill()
+        else:
+            self.despawn_wait -= 1
+        game_window.blit(self.image, (self.rect.x, self.rect.y))
 
     #METHOD: Applies trap effects to enemies
     def attack(self, tile):
@@ -165,6 +211,8 @@ class VampireSprite(sprite.Sprite):
             self.speed = SLOW_SPEED
         if tile.trap == DAMAGE:
             self.health -= 1
+        if tile.trap == MINE:
+            self.health = 0
 
 #------------------------------------------------------------------ WerePizza Subclass
 
@@ -267,6 +315,13 @@ class Counters(object):
         # once every BUCK_RATE times the game loop runs
         if self.loop_count % self.buck_rate == 0:
             self.pizza_bucks += self.buck_booster
+
+    #METHOD: Loops through every cannon trap on the screen and 
+    # spawns anchovies on each cannon trap at a set rate
+    def update_cannon(self):
+        for location in cannon_coordinates:
+            if self.loop_count % self.fire_rate == 0:
+                Anchovy(location)
     
     #METHOD: Displays pizza bucks total to the screen
     def draw_bucks(self, game_window):
@@ -332,6 +387,7 @@ class Counters(object):
         self.draw_bucks(game_window)
         self.draw_bad_reviews(game_window)
         self.draw_timer(game_window)
+        self.update_cannon()
 
 #------------------------------------------------------------------ Trap Class
 
@@ -388,6 +444,8 @@ class PlayTile(BackgroundTile):
             self.trap = trap 
             if trap == EARN:
                 counters.buck_booster += EARN_BUCK_BOOSTER
+            if trap == PROJECTILE:
+                cannon_coordinates.append((self.rect.x, self.rect.y))
         #If conditions are not met, nothing happens.
         return None
     
@@ -433,10 +491,37 @@ class InactiveTile(BackgroundTile):
     def draw_trap(self, game_window, trap_applicator):
         pass
 
+#------------------------------------------------------------------ Anchovy Class
+
+#Creates instances of projectiles used with the Cannon trap
+class Anchovy(sprite.Sprite):
+    
+    #METHOD: The cannon_coordinates list will be passed with the
+    # coordinate argument
+    def __init__(self, coordinates):
+        super().__init__()
+        self.image = ANCHOVY.copy()
+        self.speed = REG_SPEED
+        all_anchovies.add(self)
+        self.rect = self.image.get_rect()
+        self.rect.x = coordinates[0] + 40
+        self.rect.y = coordinates[1] + 40
+    
+    #METHOD: Moves anchovy objects to the right.
+    def update(self, game_window):
+        game_window.blit(BACKGROUND, (self.rect.x, self.rect.y), \
+            self.rect)
+        self.rect.x += self.speed
+        if self.rect.x > 1200:
+            self.kill()
+        else:
+            game_window.blit(self.image, (self.rect.x, self.rect.y))
+
 #------------------------------------------------------------------ Class Instances & Groups
 
-#Group of all Vampire instances
+#Group Instances
 all_vampires = sprite.Group()
+all_anchovies = sprite.Group()
 
 enemy_types = []
 enemy_types.append(VampireSprite)
@@ -455,13 +540,15 @@ enemy_types.append(CthulhuPizza)
 SLOW = Trap('SLOW', GARLIC_COST, GARLIC)
 DAMAGE = Trap('DAMAGE', CUTTER_COST, CUTTER)
 EARN = Trap('EARN', PEPPERONI_COST, PEPPERONI)
+MINE = Trap('MINE', TABLE_COST, TABLE)
+PROJECTILE = Trap('PROJECTILE', CANNON_COST, CANNON)
 
 #Instance for TrapApplicator
 trap_applicator = TrapApplicator()
 
 #Instance for counters
 counters = Counters(STARTING_BUCKS, BUCK_RATE, \
-    STARTING_BUCK_BOOSTER, WIN_TIME)
+    STARTING_BUCK_BOOSTER, WIN_TIME, FIRE_RATE)
 
 #------------------------------------------------------------------ Background Grid
 
@@ -485,10 +572,10 @@ for row in range(6):
             #Tests for bottom row
             if row == 5:
                 #Tests for tiles in columns 2, 3, and 4
-                if 2 <= column <= 4:
+                if 2 <= column <= 6:
                     new_tile = ButtonTile(tile_rect)
                     #Button Tiles are assinged a trap type
-                    new_tile.trap = [SLOW, DAMAGE, EARN][column-2]
+                    new_tile.trap = [SLOW, DAMAGE, EARN, MINE, PROJECTILE][column-2]
                 else:
                     #Creates InactiveTiles for the rest in row 5
                     new_tile = InactiveTile(rect)
@@ -500,7 +587,7 @@ for row in range(6):
         row_of_tiles.append(new_tile)
 
         #Tests if tile is one of 3 buttons
-        if row == 5 and 2 <= column <= 4:
+        if row == 5 and 2 <= column <= 6:
             #Displays correct image on each button
             BACKGROUND.blit(new_tile.trap.trap_img, \
                 (new_tile.rect.x, new_tile.rect.y))
@@ -548,6 +635,31 @@ while game_running:
             tile_x = x // 100
             trap_applicator.select_tile(tile_grid[tile_y] \
                 [tile_x], counters)
+        
+        #Listens for num keys to select traps
+        elif event.type == KEYDOWN:
+            #Key 1
+            if event.key == K_1:
+                trap_applicator.select_tile(tile_grid[5][2], \
+                    counters)
+            #Key 2
+            if event.key == K_2:
+                trap_applicator.select_tile(tile_grid[5][3], \
+                    counters)
+            #Key 3
+            if event.key == K_3:
+                trap_applicator.select_tile(tile_grid[5][4], \
+                    counters)
+            #Key 4
+            if event.key == K_4:
+                trap_applicator.select_tile(tile_grid[5][5], \
+                    counters)
+            #Key 5
+            if event.key == K_5:
+                trap_applicator.select_tile(tile_grid[5][6], \
+                    counters)
+            
+                
 
     #-------------------------------------------------------------- Spawning Sprites
 
@@ -621,6 +733,10 @@ while game_running:
     for tile_row in tile_grid:
         for tile in tile_row:
             tile.draw_trap(GAME_WINDOW, trap_applicator)
+
+    #Updates anchovy projectiles
+    for anchovy in all_anchovies:
+        anchovy.update(GAME_WINDOW)
 
     #Updates counters
     counters.update(GAME_WINDOW)
