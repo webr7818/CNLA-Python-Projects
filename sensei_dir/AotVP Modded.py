@@ -40,12 +40,13 @@ SPAWN_RATE = 480
 FRAME_RATE = 60
 
 #Counters
-STARTING_BUCKS = 20
+STARTING_BUCKS = 100
 BUCK_RATE = 360
 STARTING_BUCK_BOOSTER = 2
 EARN_BUCK_BOOSTER = 1
 VAMPIRE_HEALTH = 150
 ZOMBIE_HEALTH = 200
+CTHULHU_HEALTH = 600
 ONE_MINUTE = FRAME_RATE * 60
 
 #Win/lose conditions
@@ -97,6 +98,11 @@ WERE_PIZZA = transform.scale(were_surf, (WIDTH, HEIGHT))
 zombie_img = image.load('Assets/zombie_pizza.png')
 zombie_surf = Surface.convert_alpha(zombie_img)
 ZOMBIE_PIZZA = transform.scale(zombie_surf, (WIDTH, HEIGHT))
+
+#Cthulu Pizza image
+cthulhu_img = image.load('Assets/cthulhu_pizza.png')
+cthulhu_surf = Surface.convert_alpha(cthulhu_img)
+CTHULHU_PIZZA = transform.scale(cthulhu_surf, (WIDTH, HEIGHT))
 
 #Garlic image
 garlic_img = image.load('Assets/garlic.png')
@@ -216,6 +222,19 @@ class ZombiePizza(VampireSprite):
     def attack(self, tile):
         if tile.trap == DAMAGE:
             self.health -= 1
+
+#------------------------------------------------------------------ CthulhuPizza Subclass
+
+#Subclass based on VampirePizza class. Creates instances with  
+# six times the health and cannot be affected by garlic. Object 
+# moves at SLOW speed and causes two bad reviews.
+class CthulhuPizza(VampireSprite):
+    
+    def __init__(self):
+        super(CthulhuPizza, self).__init__()
+        self.health = CTHULHU_HEALTH
+        self.image = CTHULHU_PIZZA.copy()
+        self.speed = SLOW_SPEED
 
 #------------------------------------------------------------------ Counters Class
 
@@ -428,6 +447,7 @@ enemy_types.append(WerePizza)
 enemy_types.append(ZombiePizza)
 enemy_types.append(ZombiePizza)
 enemy_types.append(ZombiePizza)
+enemy_types.append(CthulhuPizza)
 
 #Trap type instances
 SLOW = Trap('SLOW', GARLIC_COST, GARLIC)
