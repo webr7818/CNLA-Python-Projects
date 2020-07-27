@@ -36,7 +36,7 @@ HEIGHT = 100
 WHITE = (255, 255, 255)
 
 #Rates
-SPAWN_RATE = 480
+SPAWN_RATE = 420
 FRAME_RATE = 60
 
 #Counters
@@ -48,7 +48,7 @@ ONE_MINUTE = FRAME_RATE * 60
 
 #Win/lose conditions
 MAX_BAD_REVIEWS = 5
-WIN_TIME = ONE_MINUTE // 2 * 3
+WIN_TIME = ONE_MINUTE * 2
 
 #Defined speeds
 FAST_SPEED = 6
@@ -70,7 +70,7 @@ FIRE_RATE = 180
 VAMPIRE_HEALTH = 150
 ZOMBIE_HEALTH = 200
 CTHULHU_HEALTH = 600
-ANCHOVY_DAMAGE = 75
+ANCHOVY_DAMAGE = 150
 
 #------------------------------------------------------------------ Asset Loading
 
@@ -175,15 +175,17 @@ class VampireSprite(sprite.Sprite):
             (self.rect.x, self.rect.y), self.rect)
         #Moves the sprites
         self.rect.x -= self.speed
-        self.check_collision(game_window)
+        self.check_collision()
         #If the sprite reaches the pizza box, despawn_wait is 0
-        if self.rect.x <= 100:
+        if self.rect.x < 100:
             counters.bad_reviews += self.bad_rev
             self.despawn_wait = 0
         #If the sprite doesn't reach the box and has 0 health, 
         # despawn_wait holds explosion image for 20 game loops
         if self.despawn_wait is None:
-            self.condition(game_window)
+            self.condition()
+            game_window.blit(self.image, (self.rect.x, \
+            self.rect.y))
         #When despawn_wait = 0, sprite disappears
         elif self.despawn_wait <= 0:
             self.kill()
@@ -191,25 +193,23 @@ class VampireSprite(sprite.Sprite):
             self.despawn_wait -= 1
         game_window.blit(self.image, (self.rect.x, self.rect.y))
 
-    def check_collision(self, game_window):
+    def check_collision(self):
         #Subtracts health when an anchovy hits a pizza
         collided = sprite.spritecollide(self, all_anchovies, True)
         if collided is not None:
             for anchovy in collided:
                 self.health -= ANCHOVY_DAMAGE
     
-    def condition(self, game_window):
-        if self.health <= 0:
+    def condition(self):
+        percent_health = self.health * 100 // VAMPIRE_HEALTH
+        if percent_health <= 0:
             self.image = EXPLOSION.copy()
             self.speed = 0
             self.despawn_wait = 20
-        #Updates image based on health percentage
-        elif 33 < self.health * 100 // VAMPIRE_HEALTH <= 70:
-            self.image = MED_HEALTH.copy()
-        elif self.health * 100 // VAMPIRE_HEALTH <= 35:
+        elif percent_health <= 35:
             self.image = LOW_HEALTH.copy()
-        game_window.blit(self.image, (self.rect.x, \
-            self.rect.y))
+        elif percent_health <= 70:
+            self.image = MED_HEALTH.copy()
 
     #METHOD: Applies trap effects to enemies
     def attack(self, tile):
@@ -219,6 +219,7 @@ class VampireSprite(sprite.Sprite):
             self.health -= 1
         if tile.trap == MINE:
             self.health = 0
+            tile.trap = None
 
 #------------------------------------------------------------------ WerePizza Subclass
 
@@ -232,7 +233,7 @@ class WerePizza(VampireSprite):
         self.speed = FAST_SPEED
         self.image = WERE_PIZZA.copy()
     
-    def check_collision(self, game_window):
+    def check_collision(self):
         pass
 
     #METHOD: Alters conditions for trap effects
@@ -243,6 +244,7 @@ class WerePizza(VampireSprite):
             self.health -= 2
         if tile.trap == MINE:
             self.health = 0
+            tile.trap = None
 
 #------------------------------------------------------------------ ZombiePizza Subclass
 
@@ -255,25 +257,22 @@ class ZombiePizza(VampireSprite):
         self.health = ZOMBIE_HEALTH
         self.image = ZOMBIE_PIZZA.copy()
 
-    def condition(self, game_window):
+    def condition(self):
         percent_health = self.health * 100 // ZOMBIE_HEALTH
-        if percent_health > 80:
-            self.image = ZOMBIE_PIZZA.copy()
-        elif percent_health > 65:
-            self.image = MED_HEALTH.copy()
-        elif percent_health > 50:
-            self.image = LOW_HEALTH.copy()
-        elif percent_health > 35:
-            self.image = ZOMBIE_PIZZA.copy()
-        elif percent_health > 20:
-            self.image = MED_HEALTH.copy()
-        elif percent_health > 0:
-            self.image = LOW_HEALTH.copy()
-        else:
+        if percent_health <= 0:
             self.image = EXPLOSION.copy()
             self.speed = 0
             self.despawn_wait = 20
-        game_window.blit(self.image, (self.rect.x, self.rect.y))
+        elif percent_health <= 20:
+            self.image = LOW_HEALTH.copy()
+        elif percent_health <= 35:
+            self.image = MED_HEALTH.copy()
+        elif percent_health <= 50:
+            self.image = ZOMBIE_PIZZA.copy()
+        elif percent_health <= 65:
+            self.image = LOW_HEALTH.copy()
+        elif percent_health <= 80:
+            self.image = MED_HEALTH.copy()
 
     def attack(self, tile):
         if tile.trap == DAMAGE:
@@ -281,8 +280,10 @@ class ZombiePizza(VampireSprite):
         if tile.trap == MINE:
             if self.health * 100 // ZOMBIE_HEALTH > 50:
                 self.health = ZOMBIE_HEALTH // 2
+                tile.trap = None
             else:
                 self.health = 0
+                tile.trap = None
 
 #------------------------------------------------------------------ CthulhuPizza Subclass
 
@@ -297,6 +298,18 @@ class CthulhuPizza(VampireSprite):
         self.image = CTHULHU_PIZZA.copy()
         self.speed = SLOW_SPEED
         self.bad_rev = 2
+
+    def condition(self):
+        percent_health = self.health * 100 // CTHULHU_HEALTH
+        if percent_health <= 0:
+            self.image = EXPLOSION.copy()
+            self.speed = 0
+            self.despawn_wait = 20
+        elif percent_health <= 25:
+            self.image = LOW_HEALTH.copy()
+        elif percent_health <= 50:
+            self.image = MED_HEALTH.copy()
+            
 
 #------------------------------------------------------------------ Counters Class
 
