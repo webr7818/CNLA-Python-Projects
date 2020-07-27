@@ -36,30 +36,31 @@ HEIGHT = 100
 WHITE = (255, 255, 255)
 
 #Rates
-SPAWN_RATE = 300
+SPAWN_RATE = 480
 FRAME_RATE = 60
 
 #Counters
 STARTING_BUCKS = 20
-BUCK_RATE = 180
+BUCK_RATE = 360
 STARTING_BUCK_BOOSTER = 2
 EARN_BUCK_BOOSTER = 1
-STARTING_HEALTH = 400
+VAMPIRE_HEALTH = 150
+ZOMBIE_HEALTH = 200
 ONE_MINUTE = FRAME_RATE * 60
 
 #Win/lose conditions
 MAX_BAD_REVIEWS = 5
-WIN_TIME = ONE_MINUTE * 1
+WIN_TIME = ONE_MINUTE // 2 * 3
 
 #Defined speeds
-FAST_SPEED = 3
+FAST_SPEED = 6
 REG_SPEED = 2
 SLOW_SPEED = 1
 
 #Trap costs
-GARLIC_COST = 8
-CUTTER_COST = 7
-PEPPERONI_COST = 15
+GARLIC_COST = 3
+CUTTER_COST = 5
+PEPPERONI_COST = 5
 
 #------------------------------------------------------------------ Asset Loading
 
@@ -92,6 +93,11 @@ were_img = image.load('Assets/were_pizza.png')
 were_surf = Surface.convert_alpha(were_img)
 WERE_PIZZA = transform.scale(were_surf, (WIDTH, HEIGHT))
 
+#Zombie Pizza image
+zombie_img = image.load('Assets/zombie_pizza.png')
+zombie_surf = Surface.convert_alpha(zombie_img)
+ZOMBIE_PIZZA = transform.scale(zombie_surf, (WIDTH, HEIGHT))
+
 #Garlic image
 garlic_img = image.load('Assets/garlic.png')
 garlic_surf = Surface.convert_alpha(garlic_img)
@@ -123,7 +129,7 @@ class VampireSprite(sprite.Sprite):
         self.image = VAMPIRE_PIZZA.copy()
         y = 50 + self.lane * 100
         self.rect = self.image.get_rect(center = (1100, y))
-        self.health = STARTING_HEALTH
+        self.health = VAMPIRE_HEALTH
     
     #METHOD: Sets up enemy movement
     def update(self, game_window, counters):
@@ -139,9 +145,9 @@ class VampireSprite(sprite.Sprite):
             if self.rect.x <= 100:
                 counters.bad_reviews += 1
         else: #Updates image based on health percentage
-            if 33 < self.health * 100 // STARTING_HEALTH <= 70:
+            if 33 < self.health * 100 // VAMPIRE_HEALTH <= 70:
                 self.image = MED_HEALTH.copy()
-            elif self.health * 100 // STARTING_HEALTH <= 35:
+            elif self.health * 100 // VAMPIRE_HEALTH <= 35:
                 self.image = LOW_HEALTH.copy()
             game_window.blit(self.image, (self.rect.x, \
                 self.rect.y))
@@ -171,6 +177,45 @@ class WerePizza(VampireSprite):
             self.speed = REG_SPEED
         if tile.trap == DAMAGE:
             self.health -= 2
+
+#------------------------------------------------------------------ ZombiePizza Subclass
+
+#Subclass based on VampirePizza class. Creates instances with  
+# double the health and cannot be affected by garlic.
+class ZombiePizza(VampireSprite):
+
+    def __init__(self):
+        super(ZombiePizza, self).__init__()
+        self.health = ZOMBIE_HEALTH
+        self.image = ZOMBIE_PIZZA.copy()
+
+    def update(self, game_window, counters):
+        game_window.blit(BACKGROUND, (self.rect.x, self.rect.y), \
+            self.rect)
+        self.rect.x -= self.speed
+        if self.health <= 0 or self.rect.x <= 100:
+            if self.rect.x <= 100:
+                counters.bad_reviews += 1
+            self.kill()
+        else:
+            percent_health = self.health * 100 // ZOMBIE_HEALTH
+            if percent_health > 80:
+                self.image = ZOMBIE_PIZZA.copy()
+            elif percent_health > 65:
+                self.image = MED_HEALTH.copy()
+            elif percent_health > 50:
+                self.image = LOW_HEALTH.copy()
+            elif percent_health > 35:
+                self.image = ZOMBIE_PIZZA.copy()
+            elif percent_health > 20:
+                self.image = MED_HEALTH.copy()
+            else:
+                self.image = LOW_HEALTH.copy()
+            game_window.blit(self.image, (self.rect.x, self.rect.y))
+
+    def attack(self, tile):
+        if tile.trap == DAMAGE:
+            self.health -= 1
 
 #------------------------------------------------------------------ Counters Class
 
@@ -375,7 +420,14 @@ all_vampires = sprite.Group()
 enemy_types = []
 enemy_types.append(VampireSprite)
 enemy_types.append(VampireSprite)
+enemy_types.append(VampireSprite)
+enemy_types.append(VampireSprite)
+enemy_types.append(VampireSprite)
 enemy_types.append(WerePizza)
+enemy_types.append(WerePizza)
+enemy_types.append(ZombiePizza)
+enemy_types.append(ZombiePizza)
+enemy_types.append(ZombiePizza)
 
 #Trap type instances
 SLOW = Trap('SLOW', GARLIC_COST, GARLIC)
