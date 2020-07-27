@@ -136,6 +136,7 @@ class VampireSprite(sprite.Sprite):
         y = 50 + self.lane * 100
         self.rect = self.image.get_rect(center = (1100, y))
         self.health = VAMPIRE_HEALTH
+        self.bad_rev = 1
     
     #METHOD: Sets up enemy movement
     def update(self, game_window, counters):
@@ -149,7 +150,7 @@ class VampireSprite(sprite.Sprite):
             self.kill()
             #Increases bad reviews if enemy reaches end
             if self.rect.x <= 100:
-                counters.bad_reviews += 1
+                counters.bad_reviews += self.bad_rev
         else: #Updates image based on health percentage
             if 33 < self.health * 100 // VAMPIRE_HEALTH <= 70:
                 self.image = MED_HEALTH.copy()
@@ -235,6 +236,7 @@ class CthulhuPizza(VampireSprite):
         self.health = CTHULHU_HEALTH
         self.image = CTHULHU_PIZZA.copy()
         self.speed = SLOW_SPEED
+        self.bad_rev = 2
 
 #------------------------------------------------------------------ Counters Class
 
