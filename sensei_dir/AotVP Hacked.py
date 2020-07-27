@@ -64,13 +64,13 @@ CANNON_COST = 8
 
 #Cannon
 cannon_coordinates = []
-FIRE_RATE = 60
+FIRE_RATE = 180
 
 #Health and Damage
 VAMPIRE_HEALTH = 150
 ZOMBIE_HEALTH = 200
 CTHULHU_HEALTH = 600
-ANCHOVY_DAMAGE = 10
+ANCHOVY_DAMAGE = 75
 
 #------------------------------------------------------------------ Asset Loading
 
@@ -175,35 +175,41 @@ class VampireSprite(sprite.Sprite):
             (self.rect.x, self.rect.y), self.rect)
         #Moves the sprites
         self.rect.x -= self.speed
-        #Subtracts health when an anchovy hits a pizza
-        collided = sprite.spritecollide(self, all_anchovies, True)
-        if collided is not None:
-            for anchovy in collided:
-                self.health -= ANCHOVY_DAMAGE
+        self.check_collision(game_window)
         #If the sprite reaches the pizza box, despawn_wait is 0
         if self.rect.x <= 100:
-            counter.bad_reviews += 1
+            counters.bad_reviews += self.bad_rev
             self.despawn_wait = 0
         #If the sprite doesn't reach the box and has 0 health, 
         # despawn_wait holds explosion image for 20 game loops
         if self.despawn_wait is None:
-            if self.health <= 0:
-                self.image = EXPLOSION.copy()
-                self.speed = 0
-                self.despawn_wait = 20
-            #Updates image based on health percentage
-            elif 33 < self.health * 100 // VAMPIRE_HEALTH <= 70:
-                self.image = MED_HEALTH.copy()
-            elif self.health * 100 // VAMPIRE_HEALTH <= 35:
-                self.image = LOW_HEALTH.copy()
-            game_window.blit(self.image, (self.rect.x, \
-                self.rect.y))
+            self.condition(game_window)
         #When despawn_wait = 0, sprite disappears
         elif self.despawn_wait <= 0:
             self.kill()
         else:
             self.despawn_wait -= 1
         game_window.blit(self.image, (self.rect.x, self.rect.y))
+
+    def check_collision(self, game_window):
+        #Subtracts health when an anchovy hits a pizza
+        collided = sprite.spritecollide(self, all_anchovies, True)
+        if collided is not None:
+            for anchovy in collided:
+                self.health -= ANCHOVY_DAMAGE
+    
+    def condition(self, game_window):
+        if self.health <= 0:
+            self.image = EXPLOSION.copy()
+            self.speed = 0
+            self.despawn_wait = 20
+        #Updates image based on health percentage
+        elif 33 < self.health * 100 // VAMPIRE_HEALTH <= 70:
+            self.image = MED_HEALTH.copy()
+        elif self.health * 100 // VAMPIRE_HEALTH <= 35:
+            self.image = LOW_HEALTH.copy()
+        game_window.blit(self.image, (self.rect.x, \
+            self.rect.y))
 
     #METHOD: Applies trap effects to enemies
     def attack(self, tile):
@@ -225,6 +231,9 @@ class WerePizza(VampireSprite):
         super(WerePizza, self).__init__()
         self.speed = FAST_SPEED
         self.image = WERE_PIZZA.copy()
+    
+    def check_collision(self, game_window):
+        pass
 
     #METHOD: Alters conditions for trap effects
     def attack(self, tile):
@@ -232,6 +241,8 @@ class WerePizza(VampireSprite):
             self.speed = REG_SPEED
         if tile.trap == DAMAGE:
             self.health -= 2
+        if tile.trap == MINE:
+            self.health = 0
 
 #------------------------------------------------------------------ ZombiePizza Subclass
 
@@ -244,33 +255,34 @@ class ZombiePizza(VampireSprite):
         self.health = ZOMBIE_HEALTH
         self.image = ZOMBIE_PIZZA.copy()
 
-    def update(self, game_window, counters):
-        game_window.blit(BACKGROUND, (self.rect.x, self.rect.y), \
-            self.rect)
-        self.rect.x -= self.speed
-        if self.health <= 0 or self.rect.x <= 100:
-            if self.rect.x <= 100:
-                counters.bad_reviews += 1
-            self.kill()
+    def condition(self, game_window):
+        percent_health = self.health * 100 // ZOMBIE_HEALTH
+        if percent_health > 80:
+            self.image = ZOMBIE_PIZZA.copy()
+        elif percent_health > 65:
+            self.image = MED_HEALTH.copy()
+        elif percent_health > 50:
+            self.image = LOW_HEALTH.copy()
+        elif percent_health > 35:
+            self.image = ZOMBIE_PIZZA.copy()
+        elif percent_health > 20:
+            self.image = MED_HEALTH.copy()
+        elif percent_health > 0:
+            self.image = LOW_HEALTH.copy()
         else:
-            percent_health = self.health * 100 // ZOMBIE_HEALTH
-            if percent_health > 80:
-                self.image = ZOMBIE_PIZZA.copy()
-            elif percent_health > 65:
-                self.image = MED_HEALTH.copy()
-            elif percent_health > 50:
-                self.image = LOW_HEALTH.copy()
-            elif percent_health > 35:
-                self.image = ZOMBIE_PIZZA.copy()
-            elif percent_health > 20:
-                self.image = MED_HEALTH.copy()
-            else:
-                self.image = LOW_HEALTH.copy()
-            game_window.blit(self.image, (self.rect.x, self.rect.y))
+            self.image = EXPLOSION.copy()
+            self.speed = 0
+            self.despawn_wait = 20
+        game_window.blit(self.image, (self.rect.x, self.rect.y))
 
     def attack(self, tile):
         if tile.trap == DAMAGE:
             self.health -= 1
+        if tile.trap == MINE:
+            if self.health * 100 // ZOMBIE_HEALTH > 50:
+                self.health = ZOMBIE_HEALTH // 2
+            else:
+                self.health = 0
 
 #------------------------------------------------------------------ CthulhuPizza Subclass
 
@@ -294,7 +306,7 @@ class CthulhuPizza(VampireSprite):
 class Counters(object):
 
     #METHOD: Sets up instances of counters
-    def __init__(self, pizza_bucks, buck_rate, buck_booster, timer):
+    def __init__(self, pizza_bucks, buck_rate, buck_booster, timer, fire_rate):
         #Starts the game loop counter at 0
         self.loop_count = 0
         #Sets up the font of the counter on the screen
@@ -308,6 +320,7 @@ class Counters(object):
         self.timer_rect = None
         self.bad_reviews = 0
         self.bad_rev_rect = None
+        self.fire_rate = fire_rate
 
     #METHOD: Sets the rate that the player earns pizza bucks
     def increment_bucks(self):
@@ -504,8 +517,8 @@ class Anchovy(sprite.Sprite):
         self.speed = REG_SPEED
         all_anchovies.add(self)
         self.rect = self.image.get_rect()
-        self.rect.x = coordinates[0] + 40
-        self.rect.y = coordinates[1] + 40
+        self.rect.x = coordinates[0] + 100
+        self.rect.y = coordinates[1]
     
     #METHOD: Moves anchovy objects to the right.
     def update(self, game_window):
@@ -598,9 +611,6 @@ for row in range(6):
                     (WIDTH * column, HEIGHT * row, \
                         WIDTH, HEIGHT), 1)
 
-#Displays background image to the screen
-GAME_WINDOW.blit(BACKGROUND, (0,0))
-
 #------------------------------------------------------------------ Game Loop
 
 #Defines the conditions for running the loop
@@ -659,7 +669,9 @@ while game_running:
                 trap_applicator.select_tile(tile_grid[5][6], \
                     counters)
             
-                
+    #-------------------------------------------------------------- Background Refresh
+    
+    GAME_WINDOW.blit(BACKGROUND, (0,0))           
 
     #-------------------------------------------------------------- Spawning Sprites
 
@@ -725,6 +737,10 @@ while game_running:
 
     #-------------------------------------------------------------- Update Displays
 
+    #Updates anchovy projectiles
+    for anchovy in all_anchovies:
+        anchovy.update(GAME_WINDOW)
+
     #Updates enemies
     for vampire in all_vampires:
         vampire.update(GAME_WINDOW, counters)
@@ -733,10 +749,6 @@ while game_running:
     for tile_row in tile_grid:
         for tile in tile_row:
             tile.draw_trap(GAME_WINDOW, trap_applicator)
-
-    #Updates anchovy projectiles
-    for anchovy in all_anchovies:
-        anchovy.update(GAME_WINDOW)
 
     #Updates counters
     counters.update(GAME_WINDOW)
